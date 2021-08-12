@@ -88,6 +88,11 @@ func GetProductName() string {
 	return C.GoString(C.deviceinfo_get_product_name())
 }
 
+// GetDeviceType returns the device type of the device (equivalent to hardware type)
+func GetDeviceType() string {
+	return C.GoString(C.deviceinfo_get_device_type_str())
+}
+
 // Info is the interface for this package (will be device.Info from other packages).
 // The other exported functions are preserved for backwards compatibility.
 type Info interface {
@@ -99,6 +104,7 @@ type Info interface {
 	GetIP() string
 	GetTimezone() (string, error)
 	GetProductName() string
+	GetDeviceType() string
 }
 
 type deviceInfo struct{}
@@ -148,4 +154,9 @@ func (d *deviceInfo) GetTimezone() (string, error) {
 // GetProductName returns the product name of the device
 func (d *deviceInfo) GetProductName() string {
 	return GetProductName()
+}
+
+// GetDeviceType returns the device type of the device (equivalent to hardware type)
+func (d *deviceInfo) GetDeviceType() string {
+	return GetDeviceType()
 }
