@@ -45,9 +45,9 @@ func GetHardwareRevision() string {
 
 // GetDeviceMac returns mac address of the device
 func GetDeviceMac() string {
-	iface, err := net.InterfaceByName("eth0")
+	iface, err := net.InterfaceByName("br0")
 	if err != nil {
-		log.Error("Failed to get MAC address of eth0")
+		log.Error("Failed to get MAC address of br0")
 		return ""
 	}
 	return iface.HardwareAddr.String()
@@ -57,7 +57,7 @@ func GetDeviceMac() string {
 func GetDeviceIP() string {
 	var linkip *net.IPNet
 
-	link, _ := netlink.LinkByName("eth0")
+	link, _ := netlink.LinkByName("br0")
 	addrlist, _ := netlink.AddrList(link, netlink.FAMILY_V4)
 	for _, addr := range addrlist {
 		if addr.Scope == int(netlink.SCOPE_UNIVERSE) {
