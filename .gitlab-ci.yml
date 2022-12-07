@@ -8,12 +8,7 @@ Lint:
   extends: .go-lint
 
 Code Generation:
-  script:
-    - go generate -v ./...
-    - git add :/
-    - git diff --exit-code HEAD
-  tags:
-    - tq-em-linux
+  extends: .go-generate-code
 
 Gitleaks:
   extends: .gitleaks
