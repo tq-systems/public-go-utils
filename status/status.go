@@ -1,9 +1,12 @@
 /*
  * status package - status.go
- * Copyright (c) 2019-2021, TQ-Systems GmbH
- * All rights reserved. For further information see LICENSE
+ * Copyright (c) 2019 - 2023 TQ-Systems GmbH <license@tq-group.com>, D-82229 Seefeld, Germany. All rights reserved.
+ * Author: Matthias Schiffer and the Energy Manager development team
  *
- * Author: Matthias Schiffer
+ * This software code contained herein is licensed under the terms and conditions of
+ * the TQ-Systems Product Software License Agreement Version 1.0.1 or any later version.
+ * You will find the corresponding license text in the LICENSE file.
+ * In case of any license issues please contact license@tq-group.com.
  */
 
 package status
