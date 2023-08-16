@@ -19,7 +19,7 @@ import (
 	"github.com/vishvananda/netlink"
 )
 
-//go:generate mockgen -destination=../mocks/device/mock_device.go -package=device github.com/tq-systems/public-go-utils/device Info
+//go:generate mockgen --build_flags=--mod=mod -destination=../mocks/device/mock_device.go -package=device github.com/tq-systems/public-go-utils/device Info
 
 /*
 #include <deviceinfo.h>
