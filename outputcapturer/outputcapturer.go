@@ -21,15 +21,14 @@ import (
 )
 
 var (
-	stdError                 []string
-	reader, writer, osStdErr *os.File
-	wg                       *sync.WaitGroup
+	stdError []string
+	wg       *sync.WaitGroup
 )
 
 // StartCaptureStderr starts capturing count Stderr calls. If count = 0, all outputs are captured
 func StartCaptureStderr(count int) {
 	stdError = stdError[:0]
-	osStdErr = os.Stderr
+	osStdErr := os.Stderr
 	reader, writer, err := os.Pipe()
 	if err != nil {
 		log.Panic(err)
@@ -72,7 +71,7 @@ func GetStderr(timeout time.Duration) []string {
 	case <-doneChannel:
 		//everything is fine
 	case <-time.NewTimer(timeout).C:
-		panic("Timeout occured")
+		panic("Timeout occurred")
 	}
 
 	return stdError
