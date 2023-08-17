@@ -123,16 +123,23 @@ func Panicf(format string, args ...interface{}) {
 }
 
 func logSyslog(priority syslog.Priority, message string) {
+	var err error
+
 	if priority <= syslog.LOG_CRIT {
-		logWriter.Crit(message)
+		err = logWriter.Crit(message)
 	} else if priority <= syslog.LOG_ERR {
-		logWriter.Err(message)
+		err = logWriter.Err(message)
 	} else if priority <= syslog.LOG_WARNING {
-		logWriter.Warning(message)
+		err = logWriter.Warning(message)
 	} else if priority <= syslog.LOG_INFO {
-		logWriter.Info(message)
+		err = logWriter.Info(message)
 	} else {
-		logWriter.Debug(message)
+		err = logWriter.Debug(message)
+	}
+
+	if err != nil {
+		// log to console
+		fmt.Fprintf(os.Stderr, "Writing message '%s' to syslog failed: %v\n", message, err)
 	}
 }
 
