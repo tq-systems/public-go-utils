@@ -12,7 +12,6 @@ package main
 
 import (
 	"flag"
-	"io/ioutil"
 	"log"
 	"os"
 	"strings"
@@ -23,13 +22,17 @@ var dir = flag.String("d", "./", "directory")
 func main() {
 	flag.Parse()
 
-	files, err := ioutil.ReadDir(*dir)
+	files, err := os.ReadDir(*dir)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	for _, f := range files {
-		removeOmitEmpty(f)
+		info, err := f.Info()
+		if err != nil {
+			log.Fatal(err)
+		}
+		removeOmitEmpty(info)
 	}
 
 }
@@ -37,7 +40,7 @@ func main() {
 func removeOmitEmpty(f os.FileInfo) {
 	if !f.IsDir() && strings.HasSuffix(f.Name(), ".pb.go") {
 		fileName := *dir + string(os.PathSeparator) + f.Name()
-		input, err := ioutil.ReadFile(fileName)
+		input, err := os.ReadFile(fileName)
 		if err != nil {
 			log.Panic(err)
 		}
@@ -50,7 +53,7 @@ func removeOmitEmpty(f os.FileInfo) {
 		}
 		output := strings.Join(allLines, "\n")
 		//READ, WRITE
-		err = ioutil.WriteFile(fileName, []byte(output), 0666)
+		err = os.WriteFile(fileName, []byte(output), 0666)
 		if err != nil {
 			log.Panic(err)
 		}
