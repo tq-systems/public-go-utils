@@ -1,9 +1,13 @@
 /*
- * Copyright (c) 2018, TQ-Systems GmbH
- * All rights reserved. For further information see LICENSE.txt
- * Marcel Matzat
+ * logging package - log.go
+ * Copyright (c) 2018 - 2023 TQ-Systems GmbH <license@tq-group.com>, D-82229 Seefeld, Germany. All rights reserved.
+ * Author: Marcel Matzat and the Energy Manager development team
+ *
+ * This software code contained herein is licensed under the terms and conditions of
+ * the TQ-Systems Product Software License Agreement Version 1.0.1 or any later version.
+ * You will find the corresponding license text in the LICENSE file.
+ * In case of any license issues please contact license@tq-group.com.
  */
-
 package log
 
 import (
@@ -119,16 +123,23 @@ func Panicf(format string, args ...interface{}) {
 }
 
 func logSyslog(priority syslog.Priority, message string) {
+	var err error
+
 	if priority <= syslog.LOG_CRIT {
-		logWriter.Crit(message)
+		err = logWriter.Crit(message)
 	} else if priority <= syslog.LOG_ERR {
-		logWriter.Err(message)
+		err = logWriter.Err(message)
 	} else if priority <= syslog.LOG_WARNING {
-		logWriter.Warning(message)
+		err = logWriter.Warning(message)
 	} else if priority <= syslog.LOG_INFO {
-		logWriter.Info(message)
+		err = logWriter.Info(message)
 	} else {
-		logWriter.Debug(message)
+		err = logWriter.Debug(message)
+	}
+
+	if err != nil {
+		// log to console
+		fmt.Fprintf(os.Stderr, "Writing message '%s' to syslog failed: %v\n", message, err)
 	}
 }
 

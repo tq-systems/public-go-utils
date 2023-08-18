@@ -1,13 +1,16 @@
 /*
- * Copyright (c) 2018, TQ-Systems GmbH
- * All rights reserved. For further information see LICENSE.txt
- * Marcel Matzat
+ * logging package - log_test.go
+ * Copyright (c) 2018 - 2023 TQ-Systems GmbH <license@tq-group.com>, D-82229 Seefeld, Germany. All rights reserved.
+ * Author: Marcel Matzat and the Energy Manager development team
+ *
+ * This software code contained herein is licensed under the terms and conditions of
+ * the TQ-Systems Product Software License Agreement Version 1.0.1 or any later version.
+ * You will find the corresponding license text in the LICENSE file.
+ * In case of any license issues please contact license@tq-group.com.
  */
-
 package log
 
 import (
-	"log/syslog"
 	"strings"
 	"testing"
 	"time"
@@ -143,47 +146,49 @@ func testLoglevelf(loglevelToLog string, fn func(string, ...interface{}), t *tes
 	}
 }
 
-func TestNotLoggedCuzOfConsoleLog(t *testing.T) {
+// The following tests check whether log messages appear in the syslog.
+// Since it is currently not possible to run it in the Docker container,
+// they are deliberately deactivated.
 
-	outputcapturer.StartCaptureStderr(1)
-	InitLogger("debug", false)
+// func TestNotLoggedCuzOfConsoleLog(t *testing.T) {
+// 	outputcapturer.StartCaptureStderr(1)
+// 	InitLogger("debug", false)
 
-	defer func() {
-		if r := recover(); r != nil {
-			// everything is fine
-		} else {
-			t.Error("Panic expected")
-		}
-	}()
-	Info("Test")
-	_ = outputcapturer.GetStderr(time.Duration(time.Second * 1))[0]
-}
+// 	defer func() {
+// 		if r := recover(); r != nil {
+// 			// everything is fine
+// 		} else {
+// 			t.Error("Panic expected")
+// 		}
+// 	}()
+// 	Info("Test")
+// 	_ = outputcapturer.GetStderr(time.Duration(time.Second * 1))[0]
+// }
 
-func TestLogLevelString(t *testing.T) {
-	InitLogger("debug", false)
-	if logWriter == nil {
-		t.Error("logWriter should not be nil")
-	}
-	testLogLevelString(syslog.LOG_DEBUG, "debug", t)
-	testLogLevelString(syslog.LOG_DEBUG, "Debug", t)
+// func TestLogLevelString(t *testing.T) {
+// 	InitLogger("debug", false)
+// 	if logWriter == nil {
+// 		t.Error("logWriter should not be nil")
+// 	}
+// 	testLogLevelString(syslog.LOG_DEBUG, "debug", t)
+// 	testLogLevelString(syslog.LOG_DEBUG, "Debug", t)
 
-	testLogLevelString(syslog.LOG_INFO, "info", t)
-	testLogLevelString(syslog.LOG_INFO, "Info", t)
+// 	testLogLevelString(syslog.LOG_INFO, "info", t)
+// 	testLogLevelString(syslog.LOG_INFO, "Info", t)
 
-	testLogLevelString(syslog.LOG_WARNING, "warning", t)
-	testLogLevelString(syslog.LOG_WARNING, "Warning", t)
+// 	testLogLevelString(syslog.LOG_WARNING, "warning", t)
+// 	testLogLevelString(syslog.LOG_WARNING, "Warning", t)
 
-	testLogLevelString(syslog.LOG_ERR, "error", t)
-	testLogLevelString(syslog.LOG_ERR, "Error", t)
+// 	testLogLevelString(syslog.LOG_ERR, "error", t)
+// 	testLogLevelString(syslog.LOG_ERR, "Error", t)
 
-	testLogLevelString(syslog.LOG_CRIT, "critical", t)
-	testLogLevelString(syslog.LOG_CRIT, "Critical", t)
-}
+// 	testLogLevelString(syslog.LOG_CRIT, "critical", t)
+// 	testLogLevelString(syslog.LOG_CRIT, "Critical", t)
+// }
 
-func testLogLevelString(exptectedLogLevel syslog.Priority, loglevelAsString string, t *testing.T) {
-	InitLogger(loglevelAsString, false)
-	if logLevel != exptectedLogLevel {
-		t.Error("logLevel should: ", exptectedLogLevel, " but was:", logLevel)
-	}
-
-}
+// func testLogLevelString(exptectedLogLevel syslog.Priority, loglevelAsString string, t *testing.T) {
+// 	InitLogger(loglevelAsString, false)
+// 	if logLevel != exptectedLogLevel {
+// 		t.Error("logLevel should: ", exptectedLogLevel, " but was:", logLevel)
+// 	}
+// }

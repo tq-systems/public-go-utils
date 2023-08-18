@@ -1,7 +1,12 @@
 /*
- * Copyright (c) 2018, TQ-Systems GmbH
- * All rights reserved. For further information see LICENSE.txt
- * Marcel Matzat
+ * outputcapturer package - outputcapturer.go
+ * Copyright (c) 2018 - 2023 TQ-Systems GmbH <license@tq-group.com>, D-82229 Seefeld, Germany. All rights reserved.
+ * Author: Marcel Matzat and the Energy Manager development team
+ *
+ * This software code contained herein is licensed under the terms and conditions of
+ * the TQ-Systems Product Software License Agreement Version 1.0.1 or any later version.
+ * You will find the corresponding license text in the LICENSE file.
+ * In case of any license issues please contact license@tq-group.com.
  */
 
 // Package outputcapturer is only for testting!
@@ -16,15 +21,14 @@ import (
 )
 
 var (
-	stdError                 []string
-	reader, writer, osStdErr *os.File
-	wg                       *sync.WaitGroup
+	stdError []string
+	wg       *sync.WaitGroup
 )
 
 // StartCaptureStderr starts capturing count Stderr calls. If count = 0, all outputs are captured
 func StartCaptureStderr(count int) {
 	stdError = stdError[:0]
-	osStdErr = os.Stderr
+	osStdErr := os.Stderr
 	reader, writer, err := os.Pipe()
 	if err != nil {
 		log.Panic(err)
@@ -67,7 +71,7 @@ func GetStderr(timeout time.Duration) []string {
 	case <-doneChannel:
 		//everything is fine
 	case <-time.NewTimer(timeout).C:
-		panic("Timeout occured")
+		panic("Timeout occurred")
 	}
 
 	return stdError
