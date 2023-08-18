@@ -1,12 +1,1 @@
 ## [{{ version }}]
-
-### Added
-- auth package
-- mqtt package
-- rest package
-
-### Changed
-- file headers with copyright information
-
-### Fixed
-- linter issues
