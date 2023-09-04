@@ -1,3 +1,7 @@
+## [1.1.1] - 2023-09-04
+### Fixed
+- mqtt: subscription to empty topic froze the process and now throws an error
+
 ## [1.1.0] - 2023-08-18
 ### Added
 - auth package
