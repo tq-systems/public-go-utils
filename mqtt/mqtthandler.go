@@ -365,6 +365,9 @@ func (client *client) doSubscribe(topic string, wait bool) error {
  * the mqtt-handler must ensure that there are no concurrent calls to Subscribe/Unsubscribe.
  */
 func (client *client) Subscribe(topic string, callback Callback) (Subscription, error) {
+	if topic == "" || callback == nil {
+		return nil, errors.New("error during Subscription: empty topic or nil callback not allowed")
+	}
 	sub := &subscription{
 		client:   client,
 		topic:    topic,

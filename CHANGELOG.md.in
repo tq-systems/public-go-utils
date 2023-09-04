@@ -1,1 +1,3 @@
 ## [{{ version }}]
+### Fixed
+- mqtt: subscription to empty topic froze the process and now throws an error

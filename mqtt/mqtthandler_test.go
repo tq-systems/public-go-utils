@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/gogo/protobuf/proto"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/tq-systems/public-go-utils/log"
 	"github.com/tq-systems/public-go-utils/mqtt/test"
@@ -30,15 +31,17 @@ import (
 const (
 	MQTTBrokerHost = "127.0.0.1"
 	MQTTBrokerPort = 1884
+	topic          = "TOPIC"
 )
 
 var (
 	MQTTBroker   = fmt.Sprintf("tcp://%s:%d", MQTTBrokerHost, MQTTBrokerPort)
-	waitGroup    sync.WaitGroup
 	mqttMessages []test.Test
 )
 
 func TestMQTTPubSubWithReconnect(t *testing.T) {
+	waitGroup := &sync.WaitGroup{}
+
 	mqttMessages = make([]test.Test, 0)
 
 	log.InitLogger("debug", true)
@@ -49,142 +52,178 @@ func TestMQTTPubSubWithReconnect(t *testing.T) {
 
 	clientPub := NewClient(MQTTBrokerHost, MQTTBrokerPort, "MQTTPublisher")
 	clientSub := NewClient(MQTTBrokerHost, MQTTBrokerPort, "MQTTSubscriber")
+	defer clientPub.Close()
+	defer clientSub.Close()
 
-	_, err := clientSub.Subscribe("TOPIC", callbackProtomessage)
+	_, err := clientSub.Subscribe(topic, waitForMessage(waitGroup))
 	if err != nil {
 		t.Error(err)
 	}
 
 	testMessage := &test.Test{}
 
-	err = broker.Process.Kill()
-	if err != nil {
-		t.Error(err)
-	}
-	_, err = broker.Process.Wait()
-	if err != nil {
-		t.Error(err)
-	}
+	// stop broker and disconnect from clients
+	stopMQTTBroker(t, broker)
 
+	// start broker again and have clients reconnect to it automatically
 	broker = startMQTTBroker(t)
-	defer func() {
-		clientPub.Close()
-		clientSub.Close()
-
-		err = broker.Process.Kill()
-		if err != nil {
-			t.Error(err)
-		}
-		_, err = broker.Process.Wait()
-		if err != nil {
-			t.Error(err)
-		}
-	}()
+	defer stopMQTTBroker(t, broker)
 
 	// Wait for reconnect
 	time.Sleep(3 * time.Second)
 
 	waitGroup.Add(1)
-	if err := clientPub.Publish("TOPIC", 0, false, testMessage); err != nil {
-		t.Error(err)
-	}
+	err = clientPub.Publish(topic, 0, false, testMessage)
+	assert.Nil(t, err)
 
 	testMessage.MessageCounter++
 
 	waitGroup.Add(1)
-	if err := clientPub.Publish("TOPIC", 0, false, testMessage); err != nil {
-		t.Error(err)
-	}
+	err = clientPub.Publish(topic, 0, false, testMessage)
+	assert.Nil(t, err)
 
-	if err := waitWithTimeout(&waitGroup, time.Duration(time.Second*2)); err != nil {
-		t.Error(err)
-	}
+	// The test succeeds if we do not timeout here
+	err = waitWithTimeout(waitGroup, time.Duration(time.Second*2))
+	assert.Nil(t, err)
 
-	if len(mqttMessages) != 2 {
-		t.Error("Not enough messages")
-	}
-
-	if mqttMessages[0].MessageCounter != 0 {
-		t.Error("Wrong MessageCounter for first message")
-	}
-
-	if mqttMessages[1].MessageCounter != 1 {
-		t.Error("Wrong MessageCounter for second message")
-	}
+	assert.Equal(t, len(mqttMessages), 2, "Not enough messages")
+	assert.Equal(t, mqttMessages[0].MessageCounter, uint64(0), "Wrong MessageCounter for first message")
+	assert.Equal(t, mqttMessages[1].MessageCounter, uint64(1), "Wrong MessageCounter for second message")
 }
 
-func TestMQTTUnsubscribe(t *testing.T) {
-	mqttMessages = make([]test.Test, 0)
-
-	log.InitLogger("debug", true)
-	log.Info("---", t.Name(), "---")
-
+func TestBroker(t *testing.T) {
 	broker := startMQTTBroker(t)
-	defer func() {
-		err := broker.Process.Kill()
-		if err != nil {
-			t.Error(err)
-		}
-		_, err = broker.Process.Wait()
-		if err != nil {
-			t.Error(err)
-		}
-	}()
-	time.Sleep(1 * time.Second)
+	defer stopMQTTBroker(t, broker)
 
-	clientPub := NewClient(MQTTBrokerHost, MQTTBrokerPort, "MQTTPublisher")
-	defer clientPub.Close()
-	clientSub := NewClient(MQTTBrokerHost, MQTTBrokerPort, "MQTTSubscriber")
-	defer clientSub.Close()
+	t.Run("Subscribe to broker", func(t *testing.T) {
+		waitGroup := &sync.WaitGroup{}
 
-	sub, _ := clientSub.Subscribe("TOPIC", callbackProtomessage)
-	_, _ = clientSub.Subscribe("TOPIC", callbackProtomessage)
+		clientSub := NewClient(MQTTBrokerHost, MQTTBrokerPort, "MQTTSubscriber")
+		defer clientSub.Close()
 
-	testMessage := &test.Test{}
+		subscription, err := clientSub.Subscribe(topic, waitForMessage(waitGroup))
+		assert.Nil(t, err)
+		subscription.Unsubscribe()
+	})
 
-	waitGroup.Add(2)
-	if err := clientPub.Publish("TOPIC", 0, false, testMessage); err != nil {
-		t.Error(err)
-	}
+	t.Run("Subscribe to broker with empty topic", func(t *testing.T) {
+		waitGroup := &sync.WaitGroup{}
 
-	if err := waitWithTimeout(&waitGroup, time.Duration(time.Second*2)); err != nil {
-		t.Error(err)
-	}
+		clientSub := NewClient(MQTTBrokerHost, MQTTBrokerPort, "MQTTSubscriber")
+		defer clientSub.Close()
 
-	sub.Unsubscribe()
-	time.Sleep(1 * time.Second)
+		waitGroup.Add(1)
+		go func() {
 
-	testMessage.MessageCounter++
+			_, err := clientSub.Subscribe("", waitForMessage(waitGroup))
+			assert.NotNil(t, err)
+			waitGroup.Done()
+		}()
 
-	waitGroup.Add(1)
-	if err := clientPub.Publish("TOPIC", 0, false, testMessage); err != nil {
-		t.Error(err)
-	}
+		// Wait for the subscription process to finish in a timely manner
+		// The test succeeds if we do not timeout here
+		err := waitWithTimeout(waitGroup, time.Duration(time.Second*2))
+		assert.Nil(t, err)
+	})
 
-	if err := waitWithTimeout(&waitGroup, time.Duration(time.Second*2)); err != nil {
-		t.Error(err)
-	}
+	t.Run("Subscribe to broker with nil callback", func(t *testing.T) {
+		waitGroup := &sync.WaitGroup{}
 
-	if len(mqttMessages) != 3 {
-		t.Error("Wrong message count")
-	}
+		clientSub := NewClient(MQTTBrokerHost, MQTTBrokerPort, "MQTTSubscriber")
+		defer clientSub.Close()
 
-	if mqttMessages[0].MessageCounter != 0 {
-		t.Error("Wrong MessageCounter for message 1")
-	}
-	if mqttMessages[1].MessageCounter != 0 {
-		t.Error("Wrong MessageCounter for message 2")
-	}
-	if mqttMessages[2].MessageCounter != 1 {
-		t.Error("Wrong MessageCounter for message 3")
-	}
+		waitGroup.Add(1)
+		go func() {
+
+			_, err := clientSub.Subscribe(topic, nil)
+			assert.NotNil(t, err)
+			waitGroup.Done()
+		}()
+
+		// Wait for the subscription process to finish in a timely manner
+		// The test succeeds if we do not timeout here
+		err := waitWithTimeout(waitGroup, time.Duration(time.Second*2))
+		assert.Nil(t, err)
+	})
+
+	t.Run("Publish to broker", func(t *testing.T) {
+		waitGroup := &sync.WaitGroup{}
+
+		clientSub := NewClient(MQTTBrokerHost, MQTTBrokerPort, "MQTTSubscriber")
+		defer clientSub.Close()
+
+		subscription, err := clientSub.Subscribe(topic, waitForMessage(waitGroup))
+		assert.Nil(t, err)
+		defer subscription.Unsubscribe()
+
+		clientPub := NewClient(MQTTBrokerHost, MQTTBrokerPort, "MQTTPublisher")
+		defer clientPub.Close()
+
+		waitGroup.Add(1)
+		err = clientPub.PublishEmpty(topic, 0, false)
+		assert.Nil(t, err)
+
+		// The test succeeds if we do not timeout here
+		err = waitWithTimeout(waitGroup, time.Duration(time.Second*2))
+		assert.Nil(t, err)
+	})
+
+	t.Run("Unsubscribe from broker", func(t *testing.T) {
+		waitGroup := &sync.WaitGroup{}
+
+		mqttMessages = make([]test.Test, 0)
+
+		clientPub := NewClient(MQTTBrokerHost, MQTTBrokerPort, "MQTTPublisher")
+		defer clientPub.Close()
+		clientSub := NewClient(MQTTBrokerHost, MQTTBrokerPort, "MQTTSubscriber")
+		defer clientSub.Close()
+
+		// Subscribe to the same topic twice to get one message twice
+		sub, err := clientSub.Subscribe(topic, waitForMessage(waitGroup))
+		assert.Nil(t, err)
+		_, err = clientSub.Subscribe(topic, waitForMessage(waitGroup))
+		assert.Nil(t, err)
+
+		testMessage := &test.Test{}
+
+		waitGroup.Add(2)
+		err = clientPub.Publish(topic, 0, false, testMessage)
+		assert.Nil(t, err)
+
+		// Wait for the message to be received twice
+		err = waitWithTimeout(waitGroup, time.Duration(time.Second*2))
+		assert.Nil(t, err)
+
+		// After unsubscription we receive the message once
+		sub.Unsubscribe()
+		time.Sleep(1 * time.Second)
+
+		testMessage.MessageCounter++
+
+		waitGroup.Add(1)
+		err = clientPub.Publish(topic, 0, false, testMessage)
+		assert.Nil(t, err)
+
+		// Wait for the message to be received once
+		err = waitWithTimeout(waitGroup, time.Duration(time.Second*2))
+		assert.Nil(t, err)
+
+		// Assertions
+		assert.Equal(t, len(mqttMessages), 3, "Wrong message count")
+		assert.Equal(t, mqttMessages[0].MessageCounter, uint64(0), "Wrong MessageCounter for message 1")
+		assert.Equal(t, mqttMessages[1].MessageCounter, uint64(0), "Wrong MessageCounter for message 2")
+		assert.Equal(t, mqttMessages[2].MessageCounter, uint64(1), "Wrong MessageCounter for message 3")
+	})
 }
 
-func callbackProtomessage(topic string, msg []byte) {
-	defer waitGroup.Done()
-	var tests = test.Test{}
-	_ = proto.Unmarshal(msg, &tests)
-	mqttMessages = append(mqttMessages, tests)
+func waitForMessage(waitGroup *sync.WaitGroup) func(topic string, msg []byte) {
+	callbackProtomessage := func(topic string, msg []byte) {
+		defer waitGroup.Done()
+		var tests = test.Test{}
+		_ = proto.Unmarshal(msg, &tests)
+		mqttMessages = append(mqttMessages, tests)
+	}
+	return callbackProtomessage
 }
 
 func startMQTTBroker(t *testing.T) *exec.Cmd {
@@ -196,7 +235,20 @@ func startMQTTBroker(t *testing.T) *exec.Cmd {
 		t.Fatal(err)
 	}
 
+	time.Sleep(1 * time.Second)
+
 	return cmd
+}
+
+func stopMQTTBroker(t *testing.T, broker *exec.Cmd) {
+	err := broker.Process.Kill()
+	if err != nil {
+		t.Error(err)
+	}
+	_, err = broker.Process.Wait()
+	if err != nil {
+		t.Error(err)
+	}
 }
 
 // waitTimeout waits for the waitgroup for the specified max timeout.
