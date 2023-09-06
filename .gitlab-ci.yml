@@ -1,30 +1,16 @@
----
 include:
 - project: tq-em/common/ci
-  file: apps.yml
-  ref: v4.1.4_tc3.7.1
+  file: template-ci.yml
+  ref: v4.1.4_tc3.8.0
 
 Lint:
-  script:
-    - golangci-lint run -E misspell
-  tags:
-    - tq-em-linux
+  extends: .go-lint
 
 Code Generation:
-  script:
-    - go mod vendor
-    - go generate -v ./...
-    - git add :/
-    - git diff --exit-code HEAD
-  tags:
-    - tq-em-linux
+  extends: .go-generate-code
 
 Unit tests:
-  script:
-    - go mod vendor
-    - go test -v ./...
-  tags:
-    - tq-em-linux
+  extends: .go-unit-tests
 
 Gitleaks:
   extends: .gitleaks
