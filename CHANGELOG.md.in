@@ -1,1 +1,3 @@
 ## [{{ version }}]
+### Added
+- clock interface to encapsulate dependency on system time for better testability
