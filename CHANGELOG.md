@@ -1,3 +1,7 @@
+## [1.2.0] - 2024-02-20
+### Added
+- clock interface to encapsulate dependency on system time for better testability
+
 ## [1.1.1] - 2023-09-04
 ### Fixed
 - mqtt: subscription to empty topic froze the process and now throws an error
