@@ -1,3 +1,7 @@
+## [1.3.0] - 2024-04-11
+### Changed
+- migrated from github.com/golang/mock to go.uber.org/mock
+
 ## [1.2.0] - 2024-02-20
 ### Added
 - clock interface to encapsulate dependency on system time for better testability
