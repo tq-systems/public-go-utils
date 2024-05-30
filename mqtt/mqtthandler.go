@@ -141,7 +141,7 @@ func locked(m *sync.Mutex, f func()) {
 }
 
 // NewClient opens a new connection to an MQTT broker
-func NewClient(brokerAddress string, brokerPort int, clientID string) Client {
+func NewClient(brokerAddress string, brokerPort int, clientID string) (Client, error) {
 	initialize.Do(func() {
 		C.mosquitto_lib_init()
 	})
@@ -168,7 +168,7 @@ func NewClient(brokerAddress string, brokerPort int, clientID string) Client {
 	if C.mosquitto_connect(client.mosq, cBrokerAddress, C.int(brokerPort), 10) != 0 {
 		log.Error(fmt.Sprintf("Unable to connect to MQTT broker %s:%d", brokerAddress, brokerPort))
 		C.mosquitto_destroy(client.mosq)
-		return nil
+		return nil, fmt.Errorf("unable to connect to MQTT broker %s:%d", brokerAddress, brokerPort)
 	}
 
 	locked(&lock, func() {
@@ -183,7 +183,7 @@ func NewClient(brokerAddress string, brokerPort int, clientID string) Client {
 		}
 	})
 
-	return client
+	return client, nil
 }
 
 func getClient(client *C.struct_mosquitto) *client {
@@ -212,7 +212,7 @@ func onConnect(mosq *C.struct_mosquitto) {
 	for _, topic := range topics {
 		err := client.doSubscribe(topic, false)
 		if err != nil {
-			log.Error(err)
+			log.Errorf("failed to subscribe to topic %s: %v", topic, err)
 		}
 	}
 
