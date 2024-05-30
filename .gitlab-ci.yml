@@ -1,7 +1,7 @@
 include:
 - project: tq-em/common/ci
   file: template-ci.yml
-  ref: v4.1.8_tc3.15.4
+  ref: v4.2.0_tc3.16.1
 
 Lint:
   extends: .go-lint
