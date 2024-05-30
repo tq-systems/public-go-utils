@@ -111,13 +111,21 @@ func testNotLogged(loglevelToLog string, fn func(...interface{}), fnName string,
 
 func testLoglevel(loglevelToLog string, fn func(...interface{}), t *testing.T) {
 
-	outputcapturer.StartCaptureStderr(1)
+	err := outputcapturer.StartCaptureStderr(1)
+	if err != nil {
+		t.Error(err)
+	}
 	InitLogger(loglevelToLog, true)
 	fn("Test")
-	firstLine := outputcapturer.GetStderr(time.Duration(time.Millisecond * 500))[0]
+	output := outputcapturer.GetStderr(time.Duration(time.Millisecond * 500))
+	if len(output) == 0 {
+		t.Error("Output was empty.")
+	} else {
+		firstLine := outputcapturer.GetStderr(time.Duration(time.Millisecond * 500))[0]
 
-	if !strings.Contains(firstLine, "Test") {
-		t.Error("Expected contains: 'Test' but was: ", firstLine)
+		if !strings.Contains(firstLine, "Test") {
+			t.Error("Expected contains: 'Test' but was: ", firstLine)
+		}
 	}
 }
 
@@ -136,7 +144,10 @@ func testNotLoggedf(loglevelToLog string, fn func(string, ...interface{}), fnNam
 
 func testLoglevelf(loglevelToLog string, fn func(string, ...interface{}), t *testing.T) {
 
-	outputcapturer.StartCaptureStderr(1)
+	err := outputcapturer.StartCaptureStderr(1)
+	if err != nil {
+		t.Error(err)
+	}
 	InitLogger(loglevelToLog, true)
 	fn("Test")
 	firstLine := outputcapturer.GetStderr(time.Duration(time.Millisecond * 500))[0]
@@ -151,7 +162,10 @@ func testLoglevelf(loglevelToLog string, fn func(string, ...interface{}), t *tes
 // they are deliberately deactivated.
 
 // func TestNotLoggedCuzOfConsoleLog(t *testing.T) {
-// 	outputcapturer.StartCaptureStderr(1)
+// 	err := outputcapturer.StartCaptureStderr(1)
+// if err != nil {
+// 		t.Error(err)
+// }
 // 	InitLogger("debug", false)
 
 // 	defer func() {
