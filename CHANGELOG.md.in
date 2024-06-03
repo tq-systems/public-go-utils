@@ -1,2 +1,3 @@
 ## [{{ version }}]
-
+### Changed
+- cleanly raise error conditions to caller instead of panicking / logging
