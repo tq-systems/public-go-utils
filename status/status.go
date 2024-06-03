@@ -15,10 +15,10 @@ package status
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 
 	dbus "github.com/godbus/dbus/v5"
-	"github.com/tq-systems/public-go-utils/log"
 )
 
 // SystemStatus is an enum describing the global system state
@@ -63,11 +63,11 @@ func (s SystemStatus) MarshalJSON() ([]byte, error) {
 
 // Handler is the status handler interface
 type Handler interface {
-	IsBusy() bool
-	GetStatus() SystemStatus
+	IsBusy() (bool, error)
+	GetStatus() (SystemStatus, error)
 	GetSafeMode() bool
-	SetStatus(SystemStatus) bool
-	SetStatusIfIdle(newStatus SystemStatus) bool
+	SetStatus(SystemStatus) (bool, error)
+	SetStatusIfIdle(newStatus SystemStatus) (bool, error)
 }
 
 type handler struct {
@@ -91,8 +91,12 @@ func NewStatus() (Handler, error) {
 }
 
 // IsBusy returns true if the current system status is not idle
-func (h *handler) IsBusy() bool {
-	return h.GetStatus() != StatusIdle
+func (h *handler) IsBusy() (bool, error) {
+	status, err := h.GetStatus()
+	if err != nil {
+		return status != StatusIdle, fmt.Errorf("unable to get status: %v", err)
+	}
+	return status != StatusIdle, nil
 }
 
 // GetSafeMode returns true if the device is in safe mode
@@ -107,36 +111,39 @@ func fileExists(filename string) bool {
 
 // SetStatusIfIdle sets a new system status if current state is idle;
 // if the system is currently busy, the status is unchanged and false is returned
-func (h *handler) SetStatusIfIdle(newStatus SystemStatus) bool {
+func (h *handler) SetStatusIfIdle(newStatus SystemStatus) (bool, error) {
 
-	if h.IsBusy() {
-		return false
+	if busy, err := h.IsBusy(); busy {
+
+		return false, fmt.Errorf("unable to find out if busy: %v", err)
 	}
 
-	return h.SetStatus(newStatus)
+	status, err := h.SetStatus(newStatus)
+	return status, fmt.Errorf("unable to set status: %v", err)
 }
 
 // GetStatus returns the current system status
-func (h *handler) GetStatus() SystemStatus {
+func (h *handler) GetStatus() (SystemStatus, error) {
 	status := StatusIdle
 
 	err := h.dbusObject.Call(getSystemStatusServiceName, 0).Store(&status)
 	if err != nil {
-		log.Error("dbus error:", err)
+		return status, fmt.Errorf("dbus error: %v", err)
+
 	}
 
-	return status
+	return status, nil
 }
 
 // SetStatus tries to set a new system status;
 // returns true if the new system status could be set, otherwise returns false
-func (h *handler) SetStatus(newStatus SystemStatus) bool {
+func (h *handler) SetStatus(newStatus SystemStatus) (bool, error) {
 	success := false
 
 	err := h.dbusObject.Call(setSystemStatusServiceName, 0, newStatus).Store(&success)
 	if err != nil {
-		log.Error("dbus error:", err)
+		return success, fmt.Errorf("dbus error: %v", err)
 	}
 
-	return success
+	return success, nil
 }
