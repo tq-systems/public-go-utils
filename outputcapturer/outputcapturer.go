@@ -14,7 +14,7 @@ package outputcapturer
 
 import (
 	"bufio"
-	"log"
+	"fmt"
 	"os"
 	"sync"
 	"time"
@@ -26,12 +26,12 @@ var (
 )
 
 // StartCaptureStderr starts capturing count Stderr calls. If count = 0, all outputs are captured
-func StartCaptureStderr(count int) {
+func StartCaptureStderr(count int) error {
 	stdError = stdError[:0]
 	osStdErr := os.Stderr
 	reader, writer, err := os.Pipe()
 	if err != nil {
-		log.Panic(err)
+		return fmt.Errorf("failed to create pipe: %v", err)
 	}
 	os.Stderr = writer
 	wg = &sync.WaitGroup{}
@@ -56,6 +56,8 @@ func StartCaptureStderr(count int) {
 		reader.Close()
 		writer.Close()
 	}()
+
+	return nil
 }
 
 // GetStderr provides all captured inputs and blocks till count (StartCaptureStderr) output captured. Panics after timeout
