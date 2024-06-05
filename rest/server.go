@@ -177,9 +177,18 @@ func NewServer(baseURL string, listen Listener, routes []Route) (*Server, error)
 	return srv, nil
 }
 
-// Serve starts the REST API handler
-func (srv *Server) Serve() {
-	log.Panic(http.Serve(srv.listener, srv.GetRouter()))
+// Serve starts the REST API handler, please consider using the method AsyncServe instead
+func (srv *Server) Serve() error {
+	return http.Serve(srv.listener, srv.GetRouter())
+}
+
+// AsyncServe is an asynchronous method for Serve, the returned channel may be used in the select block at the end of an app to encounter problems if the REST server does not serve REST requests or if it could not be initialized
+func (srv *Server) AsyncServe() chan error {
+	errChan := make(chan error, 1)
+	go func() {
+		errChan <- srv.Serve()
+	}()
+	return errChan
 }
 
 // AddHandlerWS adds handler to server which handles websocket-setup
@@ -208,7 +217,7 @@ func (srv *Server) AddAuthSocket(method string, pattern string, wsRole interface
 
 		code := handler(r, conn)
 		err = sendClose(conn, code, wsTimeout)
-		log.Warningf("failed send viaamd	 handler function: %v", err)
+		log.Warningf("failed send handler: %v", err)
 	}
 	return srv.router.HandleFunc(srv.baseURL+pattern, handle).Methods(method)
 }
