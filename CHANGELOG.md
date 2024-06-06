@@ -1,3 +1,7 @@
+## [2.0.1] - 2024-06-06
+### Changed
+- add v2 to module in go.mod
+
 ## [2.0.0] - 2024-06-06
 ### Changed
 - cleanly return error to caller instead of panicking / logging or just returning nil objects
