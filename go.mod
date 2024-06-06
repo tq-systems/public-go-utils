@@ -1,4 +1,4 @@
-module github.com/tq-systems/public-go-utils
+module github.com/tq-systems/public-go-utils/v2
 
 go 1.21
 

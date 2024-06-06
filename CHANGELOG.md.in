@@ -1,2 +1,3 @@
 ## [{{ version }}]
-
+### Changed
+- add v2 to module in go.mod
