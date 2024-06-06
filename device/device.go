@@ -14,12 +14,12 @@ import (
 	"net"
 	"os"
 
-	"github.com/tq-systems/public-go-utils/config"
-	"github.com/tq-systems/public-go-utils/log"
+	"github.com/tq-systems/public-go-utils/v2/config"
+	"github.com/tq-systems/public-go-utils/v2/log"
 	"github.com/vishvananda/netlink"
 )
 
-//go:generate mockgen --build_flags=--mod=mod -destination=../mocks/device/mock_device.go -package=device github.com/tq-systems/public-go-utils/device Info
+//go:generate mockgen --build_flags=--mod=mod -destination=../mocks/device/mock_device.go -package=device github.com/tq-systems/public-go-utils/v2/device Info
 
 /*
 #include <deviceinfo.h>

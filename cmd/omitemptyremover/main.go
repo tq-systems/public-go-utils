@@ -16,7 +16,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/tq-systems/public-go-utils/log"
+	"github.com/tq-systems/public-go-utils/v2/log"
 )
 
 var dir = flag.String("d", "./", "directory")

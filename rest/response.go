@@ -16,7 +16,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/tq-systems/public-go-utils/log"
+	"github.com/tq-systems/public-go-utils/v2/log"
 )
 
 // Response structure
