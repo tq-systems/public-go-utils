@@ -50,14 +50,21 @@ func TestMQTTPubSubWithReconnect(t *testing.T) {
 	broker := startMQTTBroker(t)
 	time.Sleep(1 * time.Second)
 
-	clientPub := NewClient(MQTTBrokerHost, MQTTBrokerPort, "MQTTPublisher")
-	clientSub := NewClient(MQTTBrokerHost, MQTTBrokerPort, "MQTTSubscriber")
+	clientPub, err := NewClient(MQTTBrokerHost, MQTTBrokerPort, "MQTTPublisher")
+	if err != nil {
+		t.Fatal(err)
+	}
 	defer clientPub.Close()
+
+	clientSub, err := NewClient(MQTTBrokerHost, MQTTBrokerPort, "MQTTSubscriber")
+	if err != nil {
+		t.Fatal(err)
+	}
 	defer clientSub.Close()
 
-	_, err := clientSub.Subscribe(topic, waitForMessage(waitGroup))
+	_, err = clientSub.Subscribe(topic, waitForMessage(waitGroup))
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	testMessage := &test.Test{}
@@ -98,7 +105,10 @@ func TestBroker(t *testing.T) {
 	t.Run("Subscribe to broker", func(t *testing.T) {
 		waitGroup := &sync.WaitGroup{}
 
-		clientSub := NewClient(MQTTBrokerHost, MQTTBrokerPort, "MQTTSubscriber")
+		clientSub, err := NewClient(MQTTBrokerHost, MQTTBrokerPort, "MQTTSubscriber")
+		if err != nil {
+			t.Fatal(err)
+		}
 		defer clientSub.Close()
 
 		subscription, err := clientSub.Subscribe(topic, waitForMessage(waitGroup))
@@ -109,7 +119,10 @@ func TestBroker(t *testing.T) {
 	t.Run("Subscribe to broker with empty topic", func(t *testing.T) {
 		waitGroup := &sync.WaitGroup{}
 
-		clientSub := NewClient(MQTTBrokerHost, MQTTBrokerPort, "MQTTSubscriber")
+		clientSub, err := NewClient(MQTTBrokerHost, MQTTBrokerPort, "MQTTSubscriber")
+		if err != nil {
+			t.Fatal(err)
+		}
 		defer clientSub.Close()
 
 		waitGroup.Add(1)
@@ -122,14 +135,17 @@ func TestBroker(t *testing.T) {
 
 		// Wait for the subscription process to finish in a timely manner
 		// The test succeeds if we do not timeout here
-		err := waitWithTimeout(waitGroup, time.Duration(time.Second*2))
+		err = waitWithTimeout(waitGroup, time.Duration(time.Second*2))
 		assert.Nil(t, err)
 	})
 
 	t.Run("Subscribe to broker with nil callback", func(t *testing.T) {
 		waitGroup := &sync.WaitGroup{}
 
-		clientSub := NewClient(MQTTBrokerHost, MQTTBrokerPort, "MQTTSubscriber")
+		clientSub, err := NewClient(MQTTBrokerHost, MQTTBrokerPort, "MQTTSubscriber")
+		if err != nil {
+			t.Error(err)
+		}
 		defer clientSub.Close()
 
 		waitGroup.Add(1)
@@ -142,21 +158,27 @@ func TestBroker(t *testing.T) {
 
 		// Wait for the subscription process to finish in a timely manner
 		// The test succeeds if we do not timeout here
-		err := waitWithTimeout(waitGroup, time.Duration(time.Second*2))
-		assert.Nil(t, err)
+		err = waitWithTimeout(waitGroup, time.Duration(time.Second*2))
+		assert.NoError(t, err)
 	})
 
 	t.Run("Publish to broker", func(t *testing.T) {
 		waitGroup := &sync.WaitGroup{}
 
-		clientSub := NewClient(MQTTBrokerHost, MQTTBrokerPort, "MQTTSubscriber")
+		clientSub, err := NewClient(MQTTBrokerHost, MQTTBrokerPort, "MQTTSubscriber")
+		if err != nil {
+			t.Fatal(err)
+		}
 		defer clientSub.Close()
 
 		subscription, err := clientSub.Subscribe(topic, waitForMessage(waitGroup))
 		assert.Nil(t, err)
 		defer subscription.Unsubscribe()
 
-		clientPub := NewClient(MQTTBrokerHost, MQTTBrokerPort, "MQTTPublisher")
+		clientPub, err := NewClient(MQTTBrokerHost, MQTTBrokerPort, "MQTTPublisher")
+		if err != nil {
+			t.Fatal(err)
+		}
 		defer clientPub.Close()
 
 		waitGroup.Add(1)
@@ -173,9 +195,16 @@ func TestBroker(t *testing.T) {
 
 		mqttMessages = make([]test.Test, 0)
 
-		clientPub := NewClient(MQTTBrokerHost, MQTTBrokerPort, "MQTTPublisher")
+		clientPub, err := NewClient(MQTTBrokerHost, MQTTBrokerPort, "MQTTPublisher")
+		if err != nil {
+			t.Error(err)
+		}
 		defer clientPub.Close()
-		clientSub := NewClient(MQTTBrokerHost, MQTTBrokerPort, "MQTTSubscriber")
+
+		clientSub, err := NewClient(MQTTBrokerHost, MQTTBrokerPort, "MQTTSubscriber")
+		if err != nil {
+			t.Error(err)
+		}
 		defer clientSub.Close()
 
 		// Subscribe to the same topic twice to get one message twice

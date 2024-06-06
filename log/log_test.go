@@ -111,13 +111,21 @@ func testNotLogged(loglevelToLog string, fn func(...interface{}), fnName string,
 
 func testLoglevel(loglevelToLog string, fn func(...interface{}), t *testing.T) {
 
-	outputcapturer.StartCaptureStderr(1)
+	err := outputcapturer.StartCaptureStderr(1)
+	if err != nil {
+		t.Error(err)
+	}
 	InitLogger(loglevelToLog, true)
 	fn("Test")
-	firstLine := outputcapturer.GetStderr(time.Duration(time.Millisecond * 500))[0]
+	output := outputcapturer.GetStderr(time.Duration(time.Millisecond * 500))
+	if len(output) == 0 {
+		t.Error("Output was empty.")
+	} else {
+		firstLine := outputcapturer.GetStderr(time.Duration(time.Millisecond * 500))[0]
 
-	if !strings.Contains(firstLine, "Test") {
-		t.Error("Expected contains: 'Test' but was: ", firstLine)
+		if !strings.Contains(firstLine, "Test") {
+			t.Error("Expected contains: 'Test' but was: ", firstLine)
+		}
 	}
 }
 
@@ -136,7 +144,10 @@ func testNotLoggedf(loglevelToLog string, fn func(string, ...interface{}), fnNam
 
 func testLoglevelf(loglevelToLog string, fn func(string, ...interface{}), t *testing.T) {
 
-	outputcapturer.StartCaptureStderr(1)
+	err := outputcapturer.StartCaptureStderr(1)
+	if err != nil {
+		t.Error(err)
+	}
 	InitLogger(loglevelToLog, true)
 	fn("Test")
 	firstLine := outputcapturer.GetStderr(time.Duration(time.Millisecond * 500))[0]
@@ -145,50 +156,3 @@ func testLoglevelf(loglevelToLog string, fn func(string, ...interface{}), t *tes
 		t.Error("Expected contains: 'Test' but was: ", firstLine)
 	}
 }
-
-// The following tests check whether log messages appear in the syslog.
-// Since it is currently not possible to run it in the Docker container,
-// they are deliberately deactivated.
-
-// func TestNotLoggedCuzOfConsoleLog(t *testing.T) {
-// 	outputcapturer.StartCaptureStderr(1)
-// 	InitLogger("debug", false)
-
-// 	defer func() {
-// 		if r := recover(); r != nil {
-// 			// everything is fine
-// 		} else {
-// 			t.Error("Panic expected")
-// 		}
-// 	}()
-// 	Info("Test")
-// 	_ = outputcapturer.GetStderr(time.Duration(time.Second * 1))[0]
-// }
-
-// func TestLogLevelString(t *testing.T) {
-// 	InitLogger("debug", false)
-// 	if logWriter == nil {
-// 		t.Error("logWriter should not be nil")
-// 	}
-// 	testLogLevelString(syslog.LOG_DEBUG, "debug", t)
-// 	testLogLevelString(syslog.LOG_DEBUG, "Debug", t)
-
-// 	testLogLevelString(syslog.LOG_INFO, "info", t)
-// 	testLogLevelString(syslog.LOG_INFO, "Info", t)
-
-// 	testLogLevelString(syslog.LOG_WARNING, "warning", t)
-// 	testLogLevelString(syslog.LOG_WARNING, "Warning", t)
-
-// 	testLogLevelString(syslog.LOG_ERR, "error", t)
-// 	testLogLevelString(syslog.LOG_ERR, "Error", t)
-
-// 	testLogLevelString(syslog.LOG_CRIT, "critical", t)
-// 	testLogLevelString(syslog.LOG_CRIT, "Critical", t)
-// }
-
-// func testLogLevelString(exptectedLogLevel syslog.Priority, loglevelAsString string, t *testing.T) {
-// 	InitLogger(loglevelAsString, false)
-// 	if logLevel != exptectedLogLevel {
-// 		t.Error("logLevel should: ", exptectedLogLevel, " but was:", logLevel)
-// 	}
-// }

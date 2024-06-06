@@ -13,6 +13,7 @@ package rest
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/tq-systems/public-go-utils/log"
@@ -49,6 +50,7 @@ func InternalError(err error) *Response {
 func NewJSONResponseWithStatus(status int, data interface{}) *Response {
 	res, err := json.Marshal(data)
 	if err != nil {
+		err = fmt.Errorf("unable to marshal data: %v", err)
 		return InternalError(err)
 	}
 

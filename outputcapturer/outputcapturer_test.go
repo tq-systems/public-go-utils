@@ -16,10 +16,13 @@ import (
 	"os"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestErrorCapturer(t *testing.T) {
-	StartCaptureStderr(1)
+	err := StartCaptureStderr(1)
+	assert.NoError(t, err)
 	fmt.Fprintln(os.Stderr, "Test Error")
 	firstLine := GetStderr(time.Duration(time.Second * 2))[0]
 	if firstLine != "Test Error" {
@@ -29,7 +32,8 @@ func TestErrorCapturer(t *testing.T) {
 
 // Expecting panic
 func TestErrorCapturerTimeout(t *testing.T) {
-	StartCaptureStderr(2)
+	err := StartCaptureStderr(2)
+	assert.NoError(t, err)
 	fmt.Fprintln(os.Stderr, "Test Error")
 
 	defer func() {

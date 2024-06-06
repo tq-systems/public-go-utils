@@ -54,11 +54,12 @@ func (mr *MockHandlerMockRecorder) GetSafeMode() *gomock.Call {
 }
 
 // GetStatus mocks base method.
-func (m *MockHandler) GetStatus() status.SystemStatus {
+func (m *MockHandler) GetStatus() (status.SystemStatus, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetStatus")
 	ret0, _ := ret[0].(status.SystemStatus)
-	return ret0
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // GetStatus indicates an expected call of GetStatus.
@@ -68,11 +69,12 @@ func (mr *MockHandlerMockRecorder) GetStatus() *gomock.Call {
 }
 
 // IsBusy mocks base method.
-func (m *MockHandler) IsBusy() bool {
+func (m *MockHandler) IsBusy() (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "IsBusy")
 	ret0, _ := ret[0].(bool)
-	return ret0
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // IsBusy indicates an expected call of IsBusy.
@@ -82,11 +84,12 @@ func (mr *MockHandlerMockRecorder) IsBusy() *gomock.Call {
 }
 
 // SetStatus mocks base method.
-func (m *MockHandler) SetStatus(arg0 status.SystemStatus) bool {
+func (m *MockHandler) SetStatus(arg0 status.SystemStatus) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SetStatus", arg0)
 	ret0, _ := ret[0].(bool)
-	return ret0
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // SetStatus indicates an expected call of SetStatus.
@@ -96,11 +99,12 @@ func (mr *MockHandlerMockRecorder) SetStatus(arg0 any) *gomock.Call {
 }
 
 // SetStatusIfIdle mocks base method.
-func (m *MockHandler) SetStatusIfIdle(arg0 status.SystemStatus) bool {
+func (m *MockHandler) SetStatusIfIdle(arg0 status.SystemStatus) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SetStatusIfIdle", arg0)
 	ret0, _ := ret[0].(bool)
-	return ret0
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // SetStatusIfIdle indicates an expected call of SetStatusIfIdle.

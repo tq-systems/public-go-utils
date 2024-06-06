@@ -14,6 +14,7 @@ package rest
 import (
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"net"
 	"net/http"
 	"strings"
@@ -155,7 +156,7 @@ func (srv *Server) AddRoute(method string, pattern string, handler func(r *http.
 }
 
 // NewServer create a new REST API handler
-func NewServer(baseURL string, listen Listener, routes []Route) *Server {
+func NewServer(baseURL string, listen Listener, routes []Route) (*Server, error) {
 	srv := MakeServer(baseURL)
 
 	for _, route := range routes {
@@ -169,17 +170,25 @@ func NewServer(baseURL string, listen Listener, routes []Route) *Server {
 	log.Info("Listening on: " + listen.Proto + ":" + listen.Address + " with URI: " + baseURL)
 	listener, err := Listen(listen.Proto, listen.Address, listen.Group)
 	if err != nil {
-		log.Error(err)
-		return nil
+		return nil, fmt.Errorf("unable to connect to create rest listener: %v", err)
 	}
 
 	srv.listener = listener
-	return srv
+	return srv, nil
 }
 
-// Serve starts the REST API handler
-func (srv *Server) Serve() {
-	log.Panic(http.Serve(srv.listener, srv.GetRouter()))
+// Serve starts the REST API handler, please consider using the method AsyncServe instead
+func (srv *Server) Serve() error {
+	return http.Serve(srv.listener, srv.GetRouter())
+}
+
+// AsyncServe is an asynchronous method for Serve, the returned channel may be used in the select block at the end of an app to encounter problems if the REST server does not serve REST requests or if it could not be initialized
+func (srv *Server) AsyncServe() chan error {
+	errChan := make(chan error, 1)
+	go func() {
+		errChan <- srv.Serve()
+	}()
+	return errChan
 }
 
 // AddHandlerWS adds handler to server which handles websocket-setup
@@ -193,18 +202,22 @@ func (srv *Server) AddAuthSocket(method string, pattern string, wsRole interface
 		var upgrader websocket.Upgrader
 		conn, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
+			log.Warningf("failed to upgrade websocket.Upgrader: %v", err)
 			return
 		}
 		defer conn.Close()
 
 		err = checkAuth(wsRole, conn)
 		if err != nil {
-			sendClose(conn, websocket.ClosePolicyViolation, wsTimeout)
+			log.Warningf("failed to check authentication message: %v", err)
+			err2 := sendClose(conn, websocket.ClosePolicyViolation, wsTimeout)
+			log.Warningf("failed send via websocket: %v", err2)
 			return
 		}
 
 		code := handler(r, conn)
-		sendClose(conn, code, wsTimeout)
+		err = sendClose(conn, code, wsTimeout)
+		log.Warningf("failed send handler: %v", err)
 	}
 	return srv.router.HandleFunc(srv.baseURL+pattern, handle).Methods(method)
 }
@@ -212,7 +225,7 @@ func (srv *Server) AddAuthSocket(method string, pattern string, wsRole interface
 func checkAuth(role interface{}, conn *websocket.Conn) error {
 	msgtype, msg, err := conn.ReadMessage()
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to read message: %v", err)
 	}
 	if msgtype != websocket.TextMessage {
 		return errors.New("invalid authentication message")
@@ -221,11 +234,12 @@ func checkAuth(role interface{}, conn *websocket.Conn) error {
 	return CheckAuth(role, string(msg))
 }
 
-func sendClose(conn *websocket.Conn, code uint16, wsTimeout time.Duration) {
+func sendClose(conn *websocket.Conn, code uint16, wsTimeout time.Duration) error {
 	var body [2]byte
 	binary.BigEndian.PutUint16(body[:], code)
 	err := conn.WriteControl(websocket.CloseMessage, body[:], time.Now().Add(wsTimeout))
 	if err != nil {
-		log.Warning("Failed to write close to WebSocket: ", err.Error())
+		return fmt.Errorf("failed to write close to WebSocket: %v ", err)
 	}
+	return nil
 }
