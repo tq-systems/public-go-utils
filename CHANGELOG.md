@@ -1,3 +1,7 @@
+## [2.0.0] - 2024-06-06
+### Changed
+- cleanly return error to caller instead of panicking / logging or just returning nil objects
+
 ## [1.3.0] - 2024-04-11
 ### Changed
 - migrated from github.com/golang/mock to go.uber.org/mock
