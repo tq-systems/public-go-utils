@@ -24,8 +24,8 @@ import (
 	"github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/tq-systems/public-go-utils/log"
-	"github.com/tq-systems/public-go-utils/mqtt/test"
+	"github.com/tq-systems/public-go-utils/v2/log"
+	"github.com/tq-systems/public-go-utils/v2/mqtt/test"
 )
 
 const (

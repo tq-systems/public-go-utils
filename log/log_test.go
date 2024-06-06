@@ -15,7 +15,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tq-systems/public-go-utils/outputcapturer"
+	"github.com/tq-systems/public-go-utils/v2/outputcapturer"
 )
 
 func TestLoglevel(t *testing.T) {

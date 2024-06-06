@@ -11,7 +11,7 @@
 
 package status
 
-//go:generate mockgen --build_flags=--mod=mod -destination=../mocks/status/mock_status.go -package=status github.com/tq-systems/public-go-utils/status Handler
+//go:generate mockgen --build_flags=--mod=mod -destination=../mocks/status/mock_status.go -package=status github.com/tq-systems/public-go-utils/v2/status Handler
 
 import (
 	"encoding/json"

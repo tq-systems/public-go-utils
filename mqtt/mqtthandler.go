@@ -10,8 +10,8 @@
  */
 
 //go:generate protoc --gogofaster_out=. test/test.proto
-//go:generate mockgen --build_flags=--mod=mod -destination=../mocks/mqtt/mock_client.go -package=mqtt github.com/tq-systems/public-go-utils/mqtt Client
-//go:generate mockgen --build_flags=--mod=mod -destination=../mocks/mqtt/mock_subscription.go -package=mqtt github.com/tq-systems/public-go-utils/mqtt Subscription
+//go:generate mockgen --build_flags=--mod=mod -destination=../mocks/mqtt/mock_client.go -package=mqtt github.com/tq-systems/public-go-utils/v2/mqtt Client
+//go:generate mockgen --build_flags=--mod=mod -destination=../mocks/mqtt/mock_subscription.go -package=mqtt github.com/tq-systems/public-go-utils/v2/mqtt Subscription
 
 //nolint:misspell
 package mqtt
@@ -63,7 +63,7 @@ import (
 	"sync"
 	"unsafe"
 
-	"github.com/tq-systems/public-go-utils/log"
+	"github.com/tq-systems/public-go-utils/v2/log"
 
 	"github.com/gogo/protobuf/proto"
 )
