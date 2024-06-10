@@ -1,17 +1,13 @@
 include:
 - project: tq-em/common/ci
   file: template-ci.yml
-  ref: v4.2.0_tc3.16.1
+  ref: v5.0.1_tc5.0.0
 
 Lint:
   extends: .go-lint
 
 Code Generation:
   extends: .go-generate-code
-  before_script:
-    - mkdir /tmp/uber_mockgen
-    - GOBIN=/tmp/uber_mockgen go install go.uber.org/mock/mockgen@v0.4.0
-    - export PATH="/tmp/uber_mockgen:$PATH"
 
 Unit tests:
   extends: .go-unit-tests
