@@ -119,7 +119,10 @@ func (h *handler) SetStatusIfIdle(newStatus SystemStatus) (bool, error) {
 	}
 
 	status, err := h.SetStatus(newStatus)
-	return status, fmt.Errorf("unable to set status: %v", err)
+	if err != nil {
+		return status, fmt.Errorf("unable to set status: %v", err)
+	}
+	return status, nil
 }
 
 // GetStatus returns the current system status
