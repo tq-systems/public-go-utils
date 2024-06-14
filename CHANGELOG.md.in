@@ -1,1 +1,3 @@
 ## [{{ version }}]
+### Fixed
+- SetStatusIfIdle of status package, it always returned an error before
