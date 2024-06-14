@@ -1,3 +1,7 @@
+## [2.0.2] - 2024-06-14
+### Fixed
+- SetStatusIfIdle of status package, it always returned an error before
+
 ## [2.0.1] - 2024-06-06
 ### Changed
 - add v2 to module in go.mod
