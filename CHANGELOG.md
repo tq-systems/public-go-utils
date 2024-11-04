@@ -1,3 +1,7 @@
+## [2.0.3] - 2024-11-04
+### Fixed
+- A race condition leading to deadlocks in PublishRaw and doSubscribe has been removed.
+
 ## [2.0.2] - 2024-06-14
 ### Fixed
 - SetStatusIfIdle of status package, it always returned an error before
