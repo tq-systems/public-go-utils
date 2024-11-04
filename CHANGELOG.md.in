@@ -1,1 +1,3 @@
 ## [{{ version }}]
+### Fixed
+- A race condition leading to deadlocks in PublishRaw and doSubscribe has been removed.

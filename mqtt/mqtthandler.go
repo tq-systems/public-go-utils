@@ -96,19 +96,16 @@ type client struct {
 	 * reconnect. doSubLock ensures that only one such call is
 	 * running at a time.
 	 *
-	 * Explicit subscriptions always wait for the subscription to finish.
-	 * This is done by locking currentMsgLock, storing the message ID of
-	 * the subscription request in currentMsg and then waiting for
-	 * currentMsgCond to be triggered. The onSubscribe handler will only
-	 * trigger when currentSub matches the message ID of the handled
-	 * subscription, so resubscriptions do not trigger currentMsgCond.
+	 * Explicit subscriptions always wait for the subscription to
+	 * finish. This is done by storing channels for such subscriptions
+	 * in confirmWaiters and blocking until the channel is closed. This
+	 * happens when the subscription is confirmed in onPubSub.
 	 *
 	 * The same facilities are used for robust publish calls (publish with
 	 * QoS >= 1) to wait for the publish to succeed.
 	 */
-	currentMsg     C.int
 	currentMsgLock *sync.Mutex
-	currentMsgCond *sync.Cond
+	confirmWaiters map[C.int]chan struct{}
 }
 
 // A Subscription tracks a registered subscription and can be used to unsubscribe
@@ -152,10 +149,9 @@ func NewClient(brokerAddress string, brokerPort int, clientID string) (Client, e
 		lock:             &sync.Mutex{},
 		connectedCond:    &sync.Cond{},
 		currentMsgLock:   &sync.Mutex{},
-		currentMsgCond:   &sync.Cond{},
+		confirmWaiters:   make(map[C.int]chan struct{}),
 	}
 	client.connectedCond.L = client.lock
-	client.currentMsgCond.L = client.currentMsgLock
 
 	cClientID := C.CString(clientID)
 	defer C.free(unsafe.Pointer(cClientID))
@@ -249,8 +245,9 @@ func onPubSub(mosq *C.struct_mosquitto, mid C.int) {
 	client := getClient(mosq)
 
 	locked(client.currentMsgLock, func() {
-		if client.currentMsg == mid {
-			client.currentMsgCond.Signal()
+		if ch, ok := client.confirmWaiters[mid]; ok {
+			close(ch)
+			delete(client.confirmWaiters, mid)
 		}
 	})
 }
@@ -331,26 +328,25 @@ func (client *client) doSubscribe(topic string, wait bool) error {
 	cTopic := C.CString(topic)
 	defer C.free(unsafe.Pointer(cTopic))
 
-	var currentSub *C.int
-	if wait {
-		/* client.currentMsg is not touched when wait is false:
-		 * only automatic resubscriptions set wait to false, and we do not want
-		 * to disturb explicit subscriptions running at the same time
-		 */
-		currentSub = &client.currentMsg
-	}
-
 	var err error
+	var publishDone chan struct{}
 	locked(client.currentMsgLock, func() {
-		ret := C.mosquitto_subscribe(client.mosq, currentSub, cTopic, 2)
+		var currentSub C.int
+		ret := C.mosquitto_subscribe(client.mosq, &currentSub, cTopic, 2)
 		if ret != 0 {
 			err = errors.New("Subscription of topic '" + topic + "' failed")
 			return
 		}
 		if wait {
-			client.currentMsgCond.Wait()
+			// Only automatic resubscriptions set wait to false, and we do not want
+			// to disturb explicit subscriptions running at the same time.
+			publishDone := make(chan struct{})
+			client.confirmWaiters[currentSub] = publishDone
 		}
 	})
+	if publishDone != nil {
+		<-publishDone
+	}
 
 	if err != nil {
 		log.Debug("Subscribed on topic: " + topic)
@@ -435,23 +431,24 @@ func (client *client) PublishRaw(topic string, qos byte, retain bool, message []
 		ptr = unsafe.Pointer(&message[0])
 	}
 
-	var currentMsg *C.int
-	if qos > 0 {
-		currentMsg = &client.currentMsg
-	}
-
 	var err error
-
+	var publishDone chan struct{}
 	locked(client.currentMsgLock, func() {
-		if C.mosquitto_publish(client.mosq, currentMsg, cTopic, C.int(msglen),
-			ptr, C.int(qos), C.bool(retain)) != 0 {
+		var currentMsg C.int
+		ret := C.mosquitto_publish(client.mosq, &currentMsg, cTopic, C.int(msglen),
+			ptr, C.int(qos), C.bool(retain))
+		if ret != 0 {
 			err = errors.New("Failed to publish message")
 			return
 		}
 		if qos > 0 {
-			client.currentMsgCond.Wait()
+			publishDone := make(chan struct{})
+			client.confirmWaiters[currentMsg] = publishDone
 		}
 	})
+	if publishDone != nil {
+		<-publishDone
+	}
 
 	return err
 }
