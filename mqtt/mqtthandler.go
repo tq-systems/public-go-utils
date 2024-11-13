@@ -61,6 +61,7 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"time"
 	"unsafe"
 
 	"github.com/tq-systems/public-go-utils/v2/log"
@@ -99,13 +100,14 @@ type client struct {
 	 * Explicit subscriptions always wait for the subscription to
 	 * finish. This is done by storing channels for such subscriptions
 	 * in confirmWaiters and blocking until the channel is closed. This
-	 * happens when the subscription is confirmed in onPubSub.
+	 * happens when the subscription is confirmed in onPubSub or
+	 * brokerConfirmTimeout has passed.
 	 *
 	 * The same facilities are used for robust publish calls (publish with
 	 * QoS >= 1) to wait for the publish to succeed.
 	 */
 	currentMsgLock *sync.Mutex
-	confirmWaiters map[C.int]chan struct{}
+	confirmWaiters map[C.int]chan error
 }
 
 // A Subscription tracks a registered subscription and can be used to unsubscribe
@@ -125,6 +127,11 @@ type Client interface {
 var (
 	initialize sync.Once
 	lock       sync.Mutex
+
+	// ErrConfirmTimedOut indicates that the MQTT broker did not confirm an
+	// action within brokerConfirmTimeout.
+	ErrConfirmTimedOut   = fmt.Errorf("waiting for confirmation from the broker timed out")
+	brokerConfirmTimeout = 5 * time.Second
 
 	// Global map to hold references to clients, and allow lookup from C callbacks
 	// Must only be accessed with lock held
@@ -149,7 +156,7 @@ func NewClient(brokerAddress string, brokerPort int, clientID string) (Client, e
 		lock:             &sync.Mutex{},
 		connectedCond:    &sync.Cond{},
 		currentMsgLock:   &sync.Mutex{},
-		confirmWaiters:   make(map[C.int]chan struct{}),
+		confirmWaiters:   make(map[C.int]chan error),
 	}
 	client.connectedCond.L = client.lock
 
@@ -320,6 +327,9 @@ func (client *client) Close() {
  * mosquitto_subscribe (while holding doSubLock), optionally waiting for
  * the subscription request to finish.
  *
+ * If wait is true, but the subscription was not confirmed within
+ * brokerConfirmTimeout, ErrConfirmTimedOut will be returned.
+ *
  * Note: doSubscribe is the only function of this package that may run either
  * from Go (when called through Subscribe) or from the libmosquitto handler
  * thread (when called from onConnect to restore subscriptions).
@@ -329,7 +339,7 @@ func (client *client) doSubscribe(topic string, wait bool) error {
 	defer C.free(unsafe.Pointer(cTopic))
 
 	var err error
-	var publishDone chan struct{}
+	var publishDone chan error
 	locked(client.currentMsgLock, func() {
 		var currentSub C.int
 		ret := C.mosquitto_subscribe(client.mosq, &currentSub, cTopic, 2)
@@ -340,12 +350,11 @@ func (client *client) doSubscribe(topic string, wait bool) error {
 		if wait {
 			// Only automatic resubscriptions set wait to false, and we do not want
 			// to disturb explicit subscriptions running at the same time.
-			publishDone := make(chan struct{})
-			client.confirmWaiters[currentSub] = publishDone
+			publishDone = client.initConfirmWaiter(currentSub)
 		}
 	})
-	if publishDone != nil {
-		<-publishDone
+	if err == nil && publishDone != nil {
+		err = <-publishDone
 	}
 
 	if err != nil {
@@ -420,6 +429,10 @@ func (sub *subscription) Unsubscribe() {
 	}
 }
 
+// PublishRaw publishes a message to the MQTT broker.
+//
+// If qos is greater than 0, but the publication was not confirmed
+// within brokerConfirmTimeout, ErrConfirmTimedOut will be returned.
 func (client *client) PublishRaw(topic string, qos byte, retain bool, message []byte) error {
 	cTopic := C.CString(topic)
 	defer C.free(unsafe.Pointer(cTopic))
@@ -432,7 +445,7 @@ func (client *client) PublishRaw(topic string, qos byte, retain bool, message []
 	}
 
 	var err error
-	var publishDone chan struct{}
+	var publishDone chan error
 	locked(client.currentMsgLock, func() {
 		var currentMsg C.int
 		ret := C.mosquitto_publish(client.mosq, &currentMsg, cTopic, C.int(msglen),
@@ -442,12 +455,11 @@ func (client *client) PublishRaw(topic string, qos byte, retain bool, message []
 			return
 		}
 		if qos > 0 {
-			publishDone := make(chan struct{})
-			client.confirmWaiters[currentMsg] = publishDone
+			publishDone = client.initConfirmWaiter(currentMsg)
 		}
 	})
-	if publishDone != nil {
-		<-publishDone
+	if err == nil && publishDone != nil {
+		err = <-publishDone
 	}
 
 	return err
@@ -465,4 +477,24 @@ func (client *client) Publish(topic string, qos byte, retain bool, message proto
 	}
 
 	return client.PublishRaw(topic, qos, retain, marshalledProto)
+}
+
+// initConfirmWaiter adds a channel for mid to client.confirmWaiters
+// and returns this channel. If the channel is still present in
+// client.confirmWaiters after brokerConfirmTimeout, ErrConfirmTimedOut
+// will be sent to it and it will be closed and removed again from
+// client.confirmWaiters.
+func (client *client) initConfirmWaiter(mid C.int) chan error {
+	publishDone := make(chan error)
+	client.confirmWaiters[mid] = publishDone
+	time.AfterFunc(brokerConfirmTimeout, func() {
+		client.currentMsgLock.Lock()
+		defer client.currentMsgLock.Unlock()
+		if ch, ok := client.confirmWaiters[mid]; ok {
+			ch <- ErrConfirmTimedOut
+			close(ch)
+			delete(client.confirmWaiters, mid)
+		}
+	})
+	return publishDone
 }
