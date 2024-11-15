@@ -1,4 +1,1 @@
 ## [{{ version }}]
-### Fixed
-- Prevent freezing in mqtt, when the MQTT broker fails to confirm some
-  subscriptions and publications.

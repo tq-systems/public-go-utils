@@ -1,3 +1,7 @@
+## [2.0.4] - 2024-11-15
+### Fixed
+- Prevent freezing in mqtt, when the MQTT broker fails to confirm some subscriptions and publications.
+
 ## [2.0.3] - 2024-11-04
 ### Fixed
 - A race condition leading to deadlocks in PublishRaw and doSubscribe has been removed.
