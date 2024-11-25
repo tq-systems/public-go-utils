@@ -27,6 +27,8 @@ func parseLoglevel(level string) syslog.Priority {
 		return syslog.LOG_DEBUG
 	case "info", "Info":
 		return syslog.LOG_INFO
+	case "notice", "Notice":
+		return syslog.LOG_NOTICE
 	case "warning", "Warning":
 		return syslog.LOG_WARNING
 	case "error", "Error":
@@ -64,6 +66,16 @@ func Info(args ...interface{}) {
 // Infof formats a message with info priority
 func Infof(format string, args ...interface{}) {
 	logfMessage(syslog.LOG_INFO, format, args...)
+}
+
+// Notice prints a message with notice priority
+func Notice(args ...interface{}) {
+	logMessage(syslog.LOG_NOTICE, args...)
+}
+
+// Noticef formats a message with notice priority
+func Noticef(format string, args ...interface{}) {
+	logfMessage(syslog.LOG_NOTICE, format, args...)
 }
 
 // Warning prints a message with warning priority
@@ -131,6 +143,8 @@ func logSyslog(priority syslog.Priority, message string) {
 		err = logWriter.Err(message)
 	} else if priority <= syslog.LOG_WARNING {
 		err = logWriter.Warning(message)
+	} else if priority <= syslog.LOG_NOTICE {
+		err = logWriter.Notice(message)
 	} else if priority <= syslog.LOG_INFO {
 		err = logWriter.Info(message)
 	} else {
