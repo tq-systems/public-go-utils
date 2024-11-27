@@ -1,3 +1,7 @@
+## [2.0.5] - 2024-11-27
+### Added
+- Loglevel Notice and Noticef
+
 ## [2.0.4] - 2024-11-15
 ### Fixed
 - Prevent freezing in mqtt, when the MQTT broker fails to confirm some subscriptions and publications.
