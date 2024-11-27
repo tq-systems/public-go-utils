@@ -22,14 +22,21 @@ func TestLoglevel(t *testing.T) {
 
 	testLoglevel("debug", Debug, t)
 	testLoglevel("debug", Info, t)
+	testLoglevel("debug", Notice, t)
 	testLoglevel("debug", Warning, t)
 	testLoglevel("debug", Error, t)
 	testLoglevel("debug", Critical, t)
 
 	testLoglevel("info", Info, t)
+	testLoglevel("info", Notice, t)
 	testLoglevel("info", Warning, t)
 	testLoglevel("info", Error, t)
 	testLoglevel("info", Critical, t)
+
+	testLoglevel("notice", Notice, t)
+	testLoglevel("notice", Warning, t)
+	testLoglevel("notice", Error, t)
+	testLoglevel("notice", Critical, t)
 
 	testLoglevel("warning", Warning, t)
 	testLoglevel("warning", Error, t)
@@ -44,15 +51,21 @@ func TestLoglevel(t *testing.T) {
 func TestNotLogged(t *testing.T) {
 	testNotLogged("info", Debug, "Debug", t)
 
+	testNotLogged("notice", Debug, "Debug", t)
+	testNotLogged("notice", Info, "Info", t)
+
 	testNotLogged("warning", Debug, "Debug", t)
 	testNotLogged("warning", Info, "Info", t)
+	testNotLogged("warning", Notice, "Notice", t)
 
 	testNotLogged("error", Debug, "Debug", t)
 	testNotLogged("error", Info, "Info", t)
+	testNotLogged("error", Notice, "Notice", t)
 	testNotLogged("error", Warning, "Warning", t)
 
 	testNotLogged("critical", Debug, "Debug", t)
 	testNotLogged("critical", Info, "Info", t)
+	testNotLogged("critical", Notice, "Notice", t)
 	testNotLogged("critical", Warning, "Warning", t)
 	testNotLogged("critical", Error, "Error", t)
 }
@@ -61,14 +74,21 @@ func TestLoglevelf(t *testing.T) {
 
 	testLoglevelf("debug", Debugf, t)
 	testLoglevelf("debug", Infof, t)
+	testLoglevelf("debug", Noticef, t)
 	testLoglevelf("debug", Warningf, t)
 	testLoglevelf("debug", Errorf, t)
 	testLoglevelf("debug", Criticalf, t)
 
 	testLoglevelf("info", Infof, t)
+	testLoglevelf("info", Noticef, t)
 	testLoglevelf("info", Warningf, t)
 	testLoglevelf("info", Errorf, t)
 	testLoglevelf("info", Criticalf, t)
+
+	testLoglevelf("notice", Noticef, t)
+	testLoglevelf("notice", Warningf, t)
+	testLoglevelf("notice", Errorf, t)
+	testLoglevelf("notice", Criticalf, t)
 
 	testLoglevelf("warning", Warningf, t)
 	testLoglevelf("warning", Errorf, t)
@@ -83,15 +103,21 @@ func TestLoglevelf(t *testing.T) {
 func TestNotLoggedf(t *testing.T) {
 	testNotLoggedf("info", Debugf, "Debugf", t)
 
+	testNotLoggedf("notice", Debugf, "Debug", t)
+	testNotLoggedf("notice", Infof, "Info", t)
+
 	testNotLoggedf("warning", Debugf, "Debugf", t)
 	testNotLoggedf("warning", Infof, "Infof", t)
+	testNotLoggedf("warning", Noticef, "Noticef", t)
 
 	testNotLoggedf("error", Debugf, "Debugf", t)
 	testNotLoggedf("error", Infof, "Infof", t)
+	testNotLoggedf("error", Noticef, "Noticef", t)
 	testNotLoggedf("error", Warningf, "Warningf", t)
 
 	testNotLoggedf("critical", Debugf, "Debugf", t)
 	testNotLoggedf("critical", Infof, "Infof", t)
+	testNotLoggedf("critical", Noticef, "Noticef", t)
 	testNotLoggedf("critical", Warningf, "Warningf", t)
 	testNotLoggedf("critical", Errorf, "Errorf", t)
 }

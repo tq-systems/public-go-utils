@@ -1,1 +1,3 @@
 ## [{{ version }}]
+### Added
+- Loglevel Notice and Noticef
