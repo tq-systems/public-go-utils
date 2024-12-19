@@ -1,3 +1,5 @@
+## [2.0.6] - 2024-12-19
+
 ## [2.0.5] - 2024-11-27
 ### Added
 - Loglevel Notice and Noticef
