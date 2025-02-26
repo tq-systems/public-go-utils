@@ -21,11 +21,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/tq-systems/public-go-utils/v2/log"
-	"github.com/tq-systems/public-go-utils/v2/mqtt/test"
+	"github.com/tq-systems/public-go-utils/v3/log"
+	"github.com/tq-systems/public-go-utils/v3/mqtt/test"
 )
 
 const (
@@ -35,14 +34,14 @@ const (
 )
 
 var (
-	MQTTBroker   = fmt.Sprintf("tcp://%s:%d", MQTTBrokerHost, MQTTBrokerPort)
-	mqttMessages []test.Test
+	MQTTBroker = fmt.Sprintf("tcp://%s:%d", MQTTBrokerHost, MQTTBrokerPort)
+	mutex      = sync.Mutex{}
 )
 
 func TestMQTTPubSubWithReconnect(t *testing.T) {
 	waitGroup := &sync.WaitGroup{}
 
-	mqttMessages = make([]test.Test, 0)
+	mqttMessages := make([]*test.Test, 0)
 
 	log.InitLogger("debug", true)
 	log.Info("---", t.Name(), "---")
@@ -62,7 +61,7 @@ func TestMQTTPubSubWithReconnect(t *testing.T) {
 	}
 	defer clientSub.Close()
 
-	_, err = clientSub.Subscribe(topic, waitForMessage(waitGroup))
+	_, err = clientSub.Subscribe(topic, waitForMessage(t, waitGroup, &mqttMessages))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -94,8 +93,8 @@ func TestMQTTPubSubWithReconnect(t *testing.T) {
 	assert.Nil(t, err)
 
 	assert.Equal(t, len(mqttMessages), 2, "Not enough messages")
-	assert.Equal(t, mqttMessages[0].MessageCounter, uint64(0), "Wrong MessageCounter for first message")
-	assert.Equal(t, mqttMessages[1].MessageCounter, uint64(1), "Wrong MessageCounter for second message")
+	assert.Equal(t, (*mqttMessages[0]).MessageCounter, uint64(0), "Wrong MessageCounter for first message")
+	assert.Equal(t, (*mqttMessages[1]).MessageCounter, uint64(1), "Wrong MessageCounter for second message")
 }
 
 func TestBroker(t *testing.T) {
@@ -111,7 +110,7 @@ func TestBroker(t *testing.T) {
 		}
 		defer clientSub.Close()
 
-		subscription, err := clientSub.Subscribe(topic, waitForMessage(waitGroup))
+		subscription, err := clientSub.Subscribe(topic, waitForMessage(t, waitGroup, nil))
 		assert.Nil(t, err)
 		subscription.Unsubscribe()
 	})
@@ -128,7 +127,7 @@ func TestBroker(t *testing.T) {
 		waitGroup.Add(1)
 		go func() {
 
-			_, err := clientSub.Subscribe("", waitForMessage(waitGroup))
+			_, err := clientSub.Subscribe("", waitForMessage(t, waitGroup, nil))
 			assert.NotNil(t, err)
 			waitGroup.Done()
 		}()
@@ -171,7 +170,7 @@ func TestBroker(t *testing.T) {
 		}
 		defer clientSub.Close()
 
-		subscription, err := clientSub.Subscribe(topic, waitForMessage(waitGroup))
+		subscription, err := clientSub.Subscribe(topic, waitForMessage(t, waitGroup, nil))
 		assert.Nil(t, err)
 		defer subscription.Unsubscribe()
 
@@ -193,7 +192,7 @@ func TestBroker(t *testing.T) {
 	t.Run("Unsubscribe from broker", func(t *testing.T) {
 		waitGroup := &sync.WaitGroup{}
 
-		mqttMessages = make([]test.Test, 0)
+		mqttMessages := make([]*test.Test, 0)
 
 		clientPub, err := NewClient(MQTTBrokerHost, MQTTBrokerPort, "MQTTPublisher")
 		if err != nil {
@@ -208,9 +207,9 @@ func TestBroker(t *testing.T) {
 		defer clientSub.Close()
 
 		// Subscribe to the same topic twice to get one message twice
-		sub, err := clientSub.Subscribe(topic, waitForMessage(waitGroup))
+		sub, err := clientSub.Subscribe(topic, waitForMessage(t, waitGroup, &mqttMessages))
 		assert.Nil(t, err)
-		_, err = clientSub.Subscribe(topic, waitForMessage(waitGroup))
+		_, err = clientSub.Subscribe(topic, waitForMessage(t, waitGroup, &mqttMessages))
 		assert.Nil(t, err)
 
 		testMessage := &test.Test{}
@@ -245,12 +244,19 @@ func TestBroker(t *testing.T) {
 	})
 }
 
-func waitForMessage(waitGroup *sync.WaitGroup) func(topic string, msg []byte) {
+func waitForMessage(t *testing.T, waitGroup *sync.WaitGroup, mqttMessages *[]*test.Test) func(topic string, msg []byte) {
 	callbackProtomessage := func(topic string, msg []byte) {
 		defer waitGroup.Done()
 		var tests = test.Test{}
-		_ = proto.Unmarshal(msg, &tests)
-		mqttMessages = append(mqttMessages, tests)
+		err := tests.UnmarshalVT(msg)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if mqttMessages != nil {
+			mutex.Lock()
+			defer mutex.Unlock()
+			*mqttMessages = append(*mqttMessages, &tests)
+		}
 	}
 	return callbackProtomessage
 }

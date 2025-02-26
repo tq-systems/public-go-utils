@@ -9,9 +9,9 @@
  * In case of any license issues please contact license@tq-group.com.
  */
 
-//go:generate protoc --gogofaster_out=. test/test.proto
-//go:generate mockgen --build_flags=--mod=mod -destination=../mocks/mqtt/mock_client.go -package=mqtt github.com/tq-systems/public-go-utils/v2/mqtt Client
-//go:generate mockgen --build_flags=--mod=mod -destination=../mocks/mqtt/mock_subscription.go -package=mqtt github.com/tq-systems/public-go-utils/v2/mqtt Subscription
+//go:generate protoc --go_out=. --go_opt=paths=source_relative --go-vtproto_out=. --go-vtproto_opt=features=unmarshal test/test.proto
+//go:generate mockgen --build_flags=--mod=mod -destination=../mocks/mqtt/mock_client.go -package=mqtt github.com/tq-systems/public-go-utils/v3/mqtt Client
+//go:generate mockgen --build_flags=--mod=mod -destination=../mocks/mqtt/mock_subscription.go -package=mqtt github.com/tq-systems/public-go-utils/v3/mqtt Subscription
 
 //nolint:misspell
 package mqtt
@@ -64,9 +64,9 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/tq-systems/public-go-utils/v2/log"
+	"github.com/tq-systems/public-go-utils/v3/log"
 
-	"github.com/gogo/protobuf/proto"
+	"google.golang.org/protobuf/proto"
 )
 
 // A Callback is a function run for every message received for a subscribed topic
@@ -451,7 +451,7 @@ func (client *client) PublishRaw(topic string, qos byte, retain bool, message []
 		ret := C.mosquitto_publish(client.mosq, &currentMsg, cTopic, C.int(msglen),
 			ptr, C.int(qos), C.bool(retain))
 		if ret != 0 {
-			err = errors.New("Failed to publish message")
+			err = errors.New("failed to publish message")
 			return
 		}
 		if qos > 0 {
