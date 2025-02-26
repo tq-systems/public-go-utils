@@ -1,1 +1,3 @@
 ## [{{ version }}]
+### Changed
+- switch protobuf library to google.golang.org/protobuf
