@@ -1,3 +1,7 @@
+## [3.0.0] - 2025-03-03
+### Changed
+- switch protobuf library to google.golang.org/protobuf
+
 ## [2.0.6] - 2024-12-19
 
 ## [2.0.5] - 2024-11-27
