@@ -22,8 +22,8 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
-	"github.com/tq-systems/public-go-utils/v2/auth"
-	"github.com/tq-systems/public-go-utils/v2/log"
+	"github.com/tq-systems/public-go-utils/v3/auth"
+	"github.com/tq-systems/public-go-utils/v3/log"
 )
 
 // Server structure
