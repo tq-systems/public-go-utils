@@ -470,7 +470,16 @@ func (client *client) PublishEmpty(topic string, qos byte, retain bool) error {
 }
 
 func (client *client) Publish(topic string, qos byte, retain bool, message proto.Message) error {
-	marshalledProto, err := proto.Marshal(message)
+	type vtProtoMessage interface{ MarshalVT() ([]byte, error) }
+	var marshalledProto []byte
+	var err error
+	if vtmessage, ok := message.(vtProtoMessage); ok {
+		// Use the faster MarshalVT if available.
+		marshalledProto, err = vtmessage.MarshalVT()
+	} else {
+		marshalledProto, err = proto.Marshal(message)
+	}
+
 	if err != nil {
 		log.Panic(err.Error())
 		return err
