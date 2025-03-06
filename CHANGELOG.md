@@ -1,3 +1,7 @@
+## [3.1.0] - 2025-03-06
+### Changed
+- the Publish method of the MQTT client now uses MarshalVT for better performance, whenever possible
+
 ## [3.0.0] - 2025-03-03
 ### Changed
 - switch protobuf library to google.golang.org/protobuf

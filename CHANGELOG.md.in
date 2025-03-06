@@ -1,5 +1,1 @@
 ## [{{ version }}]
-### Changed
-- The Publish method of the MQTT client now uses MarshalVT for better
-  performance, whenever possible.
-
