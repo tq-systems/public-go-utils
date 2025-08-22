@@ -13,6 +13,7 @@ package rest
 
 import (
 	"encoding/binary"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net"
@@ -48,15 +49,55 @@ type Listener struct {
 	Group   string
 }
 
+// errorResp is an error response in the form that must be used as JSON
+// for all 4xx and 5xx responses in public HTTP APIs.
+type errorResp struct {
+	Error errorBody `json:"error"`
+}
+
+// An errorBody is a error as it is returned to external users as JSON.
+// Code and Details fields are optional, Message is required.
+type errorBody struct {
+	Message string `json:"message"`
+	Code    *int   `json:"code,omitempty"`
+	Details any    `json:"details,omitempty"`
+}
+
 const (
 	wsTimeout = 5 * time.Second
 )
 
 // MakeServer creates a server
 func MakeServer(baseURL string) *Server {
+	router := mux.NewRouter().UseEncodedPath()
+	router.NotFoundHandler = http.HandlerFunc(notFoundHandler)
+	router.MethodNotAllowedHandler = http.HandlerFunc(methodNotAllowedHandler)
 	return &Server{
-		router:  mux.NewRouter().UseEncodedPath(),
+		router:  router,
 		baseURL: baseURL,
+	}
+}
+
+func notFoundHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusNotFound)
+	err := json.NewEncoder(w).Encode(errorResp{
+		Error: errorBody{Message: "The requested endpoint does not exist."},
+	})
+	if err != nil {
+		log.Errorf("Could not write 404 response body: %s", err)
+	}
+}
+
+func methodNotAllowedHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusMethodNotAllowed)
+	msg := fmt.Sprintf("HTTP Method '%s' is not allowed for this endpoint.", r.Method)
+	err := json.NewEncoder(w).Encode(errorResp{
+		Error: errorBody{Message: msg},
+	})
+	if err != nil {
+		log.Errorf("Could not write 405 response body: %s", err)
 	}
 }
 
