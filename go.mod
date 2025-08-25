@@ -8,10 +8,10 @@ require (
 	github.com/gorilla/websocket v1.5.3
 	github.com/planetscale/vtprotobuf v0.6.0
 	github.com/stretchr/testify v1.9.0
-	github.com/vishvananda/netlink v1.3.0
-	go.uber.org/mock v0.5.0
-	golang.org/x/sys v0.30.0
-	google.golang.org/protobuf v1.36.5
+	github.com/vishvananda/netlink v1.3.1
+	go.uber.org/mock v0.6.0
+	golang.org/x/sys v0.35.0
+	google.golang.org/protobuf v1.36.8
 )
 
 require (

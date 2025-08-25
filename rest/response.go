@@ -65,3 +65,20 @@ func NewJSONResponseWithStatus(status int, data interface{}) *Response {
 func NewJSONResponse(data interface{}) *Response {
 	return NewJSONResponseWithStatus(http.StatusOK, data)
 }
+
+// NewErrorResponse creates an error response. It has a JSON body in the
+// form that is required for our public APIs. code and details may be
+// nil.
+//
+// msg must contain an error message that is a full sentence, explaining
+// the error to the user. It must not include unnecessary implementation
+// details.
+func NewErrorResponse(status int, msg string, code *int, details any) *Response {
+	return NewJSONResponseWithStatus(status, errorResp{
+		Error: errorBody{
+			Message: msg,
+			Code:    code,
+			Details: details,
+		},
+	})
+}
