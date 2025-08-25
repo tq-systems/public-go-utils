@@ -42,9 +42,9 @@ func StartCaptureStderr(count int) error {
 		if count > 0 {
 			for scanner.Scan() {
 				counter++
-				wg.Done()
 				line := scanner.Text()
 				stdError = append(stdError, line)
+				wg.Done()
 
 				// count = 0 -> endless
 				if counter >= count {
