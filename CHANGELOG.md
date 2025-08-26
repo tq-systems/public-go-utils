@@ -1,3 +1,10 @@
+## [3.1.1] - 2025-08-26
+### Changed
+- rest: Automatic 404 and 405 responses now have JSON bodies.
+
+### Fixed
+- Removed race condition in test of outputcapturer.
+
 ## [3.1.0] - 2025-03-06
 ### Changed
 - the Publish method of the MQTT client now uses MarshalVT for better performance, whenever possible

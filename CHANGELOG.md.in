@@ -1,6 +1,1 @@
 ## [{{ version }}]
-### Changed
-- rest: Automatic 404 and 405 responses now have JSON bodies.
-
-### Fixed
-- Removed race condition in test of outputcapturer.
