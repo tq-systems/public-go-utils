@@ -134,6 +134,23 @@ func Panicf(format string, args ...interface{}) {
 	panic(s)
 }
 
+// ConfigurationChangeInternalControl logs a message with notice priority indicating a configuration changed by internal control algorithms
+func ConfigurationChangeInternalControl(format string, args ...interface{}) {
+	Noticef("Configuration changed by internal control: %v", fmt.Sprintf(format, args...))
+}
+
+// ConfigurationChangeUser logs a message with notice priority indicating a configuration changed by the user
+// e.g. via web interface (REST requests)
+func ConfigurationChangeUser(format string, args ...interface{}) {
+	Noticef("Configuration changed by user: %v", fmt.Sprintf(format, args...))
+}
+
+// ConfigurationChangeExternalControl logs a message with notice priority indicating a configuration changed by external control
+// e.g. by another app via DBUS or machine-to-machine interface such as modbus
+func ConfigurationChangeExternalControl(format string, args ...interface{}) {
+	Noticef("Configuration changed by external control: %v", fmt.Sprintf(format, args...))
+}
+
 func logSyslog(priority syslog.Priority, message string) {
 	var err error
 
