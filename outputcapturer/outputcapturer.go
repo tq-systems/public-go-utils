@@ -23,28 +23,50 @@ import (
 var (
 	stdError []string
 	wg       *sync.WaitGroup
+	mu       sync.Mutex
+	stderrMu sync.Mutex
 )
 
 // StartCaptureStderr starts capturing count Stderr calls. If count = 0, all outputs are captured
 func StartCaptureStderr(count int) error {
+	mu.Lock()
 	stdError = stdError[:0]
+	wg = &sync.WaitGroup{}
+	wg.Add(count)
+	mu.Unlock()
+
+	stderrMu.Lock()
 	osStdErr := os.Stderr
 	reader, writer, err := os.Pipe()
 	if err != nil {
+		stderrMu.Unlock()
 		return fmt.Errorf("failed to create pipe: %v", err)
 	}
 	os.Stderr = writer
-	wg = &sync.WaitGroup{}
-	wg.Add(count)
+	stderrMu.Unlock()
+
 	var counter = 0
 	go func() {
+		defer func() {
+			stderrMu.Lock()
+			os.Stderr = osStdErr
+			stderrMu.Unlock()
+			reader.Close()
+			writer.Close()
+		}()
+
 		scanner := bufio.NewScanner(reader)
 		if count > 0 {
 			for scanner.Scan() {
 				counter++
 				line := scanner.Text()
+
+				mu.Lock()
 				stdError = append(stdError, line)
-				wg.Done()
+				if wg != nil {
+					wg.Done()
+				}
+				mu.Unlock()
 
 				// count = 0 -> endless
 				if counter >= count {
@@ -52,9 +74,6 @@ func StartCaptureStderr(count int) error {
 				}
 			}
 		}
-		os.Stderr = osStdErr
-		reader.Close()
-		writer.Close()
 	}()
 
 	return nil
@@ -65,7 +84,13 @@ func GetStderr(timeout time.Duration) []string {
 
 	doneChannel := make(chan bool, 1)
 	go func() {
-		wg.Wait()
+		mu.Lock()
+		currentWg := wg
+		mu.Unlock()
+
+		if currentWg != nil {
+			currentWg.Wait()
+		}
 		doneChannel <- true
 	}()
 
@@ -76,5 +101,11 @@ func GetStderr(timeout time.Duration) []string {
 		panic("Timeout occurred")
 	}
 
-	return stdError
+	mu.Lock()
+	// Return a copy to avoid race conditions when caller reads the slice while another goroutine modifies stdError
+	result := make([]string, len(stdError))
+	copy(result, stdError)
+	mu.Unlock()
+
+	return result
 }

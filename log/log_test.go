@@ -182,3 +182,99 @@ func testLoglevelf(loglevelToLog string, fn func(string, ...interface{}), t *tes
 		t.Error("Expected contains: 'Test' but was: ", firstLine)
 	}
 }
+
+func TestConfigurationChangeFunctions(t *testing.T) {
+	tests := []struct {
+		name     string
+		fn       func(string, ...interface{})
+		loglevel string
+	}{
+		{
+			name:     "ConfigurationChangeSystem logs at notice level",
+			fn:       ConfigurationChangeInternalControl,
+			loglevel: "notice",
+		},
+		{
+			name:     "ConfigurationChangeUser logs at notice level",
+			fn:       ConfigurationChangeUser,
+			loglevel: "notice",
+		},
+		{
+			name:     "ConfigurationChangeDBUS logs at notice level",
+			fn:       ConfigurationChangeExternalControl,
+			loglevel: "notice",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := outputcapturer.StartCaptureStderr(1)
+			if err != nil {
+				t.Error(err)
+			}
+			InitLogger(tt.loglevel, true)
+			tt.fn("test message")
+
+			output := outputcapturer.GetStderr(time.Duration(time.Millisecond * 500))
+			if len(output) == 0 {
+				t.Errorf("Expected log output but got none for loglevel '%s'", tt.loglevel)
+				return
+			}
+
+			firstLine := output[0]
+			if !strings.Contains(firstLine, "test message") {
+				t.Errorf("Expected log to contain '%s' but got: '%s'", "test message", firstLine)
+			}
+		})
+	}
+}
+
+func TestConfigurationChangeFunctionsNotLogged(t *testing.T) {
+	tests := []struct {
+		name     string
+		fn       func(string, ...interface{})
+		fnName   string
+		loglevel string
+	}{
+		{
+			name:     "ConfigurationChangeSystem does not log when loglevel is warning",
+			fn:       ConfigurationChangeInternalControl,
+			fnName:   "ConfigurationChangeInternalControl",
+			loglevel: "warning",
+		},
+		{
+			name:     "ConfigurationChangeUser does not log when loglevel is warning",
+			fn:       ConfigurationChangeUser,
+			fnName:   "ConfigurationChangeUser",
+			loglevel: "warning",
+		},
+		{
+			name:     "ConfigurationChangeDBUS does not log when loglevel is warning",
+			fn:       ConfigurationChangeExternalControl,
+			fnName:   "ConfigurationChangeExternalControl",
+			loglevel: "warning",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			defer func() {
+				if r := recover(); r != nil {
+					// Panic expected because no output is generated (timeout in GetStderr)
+				} else {
+					t.Errorf("Panic expected for loglevel: %s with function: %s (no log output expected)", tt.loglevel, tt.fnName)
+				}
+			}()
+
+			err := outputcapturer.StartCaptureStderr(1)
+			if err != nil {
+				t.Error(err)
+			}
+			InitLogger(tt.loglevel, true)
+			tt.fn("test message")
+
+			// This should timeout and panic because nothing should be logged
+			outputcapturer.GetStderr(time.Duration(time.Millisecond * 500))
+		})
+	}
+}
