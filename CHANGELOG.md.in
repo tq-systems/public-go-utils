@@ -1,6 +1,2 @@
 ## [{{ version }}]
-### Changed
-- LICENSE: add TQSPSLA-1.0.3 and reference in README.md
 
-### Added
-- Log configuration changes with loglevel notice

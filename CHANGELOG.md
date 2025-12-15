@@ -1,3 +1,10 @@
+## [3.2.0] - 2025-12-15
+### Changed
+- LICENSE: add TQSPSLA-1.0.3 and reference in README.md
+
+### Added
+- Add convenience function to uniformly log configuration changes with loglevel notice (ConfigurationChangeUser, ConfigurationChangeInternalControl, ConfigurationChangeExternalControl)
+
 ## [3.1.1] - 2025-08-26
 ### Changed
 - rest: Automatic 404 and 405 responses now have JSON bodies.
