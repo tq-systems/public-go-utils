@@ -1,3 +1,7 @@
+## [3.2.1] - 2026-01-07
+### Changed
+- make logging on websocket close stricter to avoid log spam
+
 ## [3.2.0] - 2025-12-15
 ### Changed
 - LICENSE: add TQSPSLA-1.0.3 and reference in README.md

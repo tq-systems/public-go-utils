@@ -1,3 +1,2 @@
 ## [{{ version }}]
-### Changed
-- make logging on websocket close stricter to avoid log spam
+
