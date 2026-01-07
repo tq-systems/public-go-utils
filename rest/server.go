@@ -258,7 +258,9 @@ func (srv *Server) AddAuthSocket(method string, pattern string, wsRole interface
 
 		code := handler(r, conn)
 		err = sendClose(conn, code, wsTimeout)
-		log.Warningf("failed send handler: %v", err)
+		if err != nil {
+			log.Warningf("failed send handler: %v", err)
+		}
 	}
 	return srv.router.HandleFunc(srv.baseURL+pattern, handle).Methods(method)
 }
@@ -279,7 +281,10 @@ func sendClose(conn *websocket.Conn, code uint16, wsTimeout time.Duration) error
 	var body [2]byte
 	binary.BigEndian.PutUint16(body[:], code)
 	err := conn.WriteControl(websocket.CloseMessage, body[:], time.Now().Add(wsTimeout))
-	if err != nil {
+	// On server shutdown we ignore two tpes of errors:
+	// 1. When closing a webserver getting a ErrCloseSent is expected, as the client already closed the connection
+	// 2. Reloading a web page leads to a broken pipe, cause the client closed the connection without telling the server
+	if err != nil && err != websocket.ErrCloseSent && !strings.Contains(err.Error(), "broken pipe") {
 		return fmt.Errorf("failed to write close to WebSocket: %v ", err)
 	}
 	return nil
