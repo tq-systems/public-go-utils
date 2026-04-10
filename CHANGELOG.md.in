@@ -1,2 +1,3 @@
 ## [{{ version }}]
-
+### Fixed
+- remove wrong and unneccessary debug message when successfully subscribing to MQTT
