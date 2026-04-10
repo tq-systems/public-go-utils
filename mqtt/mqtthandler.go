@@ -357,10 +357,6 @@ func (client *client) doSubscribe(topic string, wait bool) error {
 		err = <-publishDone
 	}
 
-	if err != nil {
-		log.Debug("Subscribed on topic: " + topic)
-	}
-
 	return err
 }
 
