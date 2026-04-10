@@ -1,3 +1,7 @@
+## [3.2.2] - 2026-04-10
+### Fixed
+- remove wrong and unneccessary debug message when successfully subscribing to MQTT
+
 ## [3.2.1] - 2026-01-07
 ### Changed
 - make logging on websocket close stricter to avoid log spam
