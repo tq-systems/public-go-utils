@@ -1,7 +1,7 @@
 include:
 - project: tq-em/build/docker/toolchain
   file: ci/apps.yml
-  ref: v8.2.0_tc8.1.0
+  ref: v9.0.0-tc9.0.3
 
 Lint:
   extends: .go-lint
