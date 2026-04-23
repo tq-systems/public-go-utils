@@ -2,3 +2,5 @@
 ### Added
 - Functions to query hardware type and compatible string, using new libdeviceinfo functions (needs core image containing libdeviceinfo >= v1.9.0)
 
+### Changed
+- Updated copyright license and file headers
