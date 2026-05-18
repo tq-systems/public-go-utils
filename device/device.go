@@ -73,7 +73,7 @@ func GetDeviceIP() string {
 	for _, addr := range addrlist {
 		if addr.Scope == int(netlink.SCOPE_UNIVERSE) {
 			// Return DHCP/static IP
-			return addr.IPNet.IP.String()
+			return addr.IP.String()
 		}
 		// Auto
 		linkip = addr.IPNet

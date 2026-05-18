@@ -112,7 +112,7 @@ func (srv *Server) GetRouter() *mux.Router {
 func CheckAuth(role interface{}, authorization string) error {
 	authSplit := strings.Split(authorization, " ")
 	if len(authSplit) != 2 || authSplit[0] != "Bearer" {
-		return errors.New("Invalid authorization token")
+		return errors.New("invalid authorization token")
 	}
 	user, err := auth.ValidateAuthToken(authSplit[1])
 	if err != nil {
@@ -120,7 +120,7 @@ func CheckAuth(role interface{}, authorization string) error {
 	}
 
 	if !user.HasRole(role) {
-		return errors.New("Insufficient permissions")
+		return errors.New("insufficient permissions")
 	}
 
 	return nil
