@@ -1,3 +1,10 @@
+## [3.3.0] - 2026-05-20
+### Added
+- Functions to query hardware type and compatible string, using new libdeviceinfo functions (needs core image containing libdeviceinfo >= v1.9.0)
+
+### Changed
+- Updated copyright license and file headers
+
 ## [3.2.2] - 2026-04-10
 ### Fixed
 - remove wrong and unneccessary debug message when successfully subscribing to MQTT
