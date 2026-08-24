@@ -52,6 +52,18 @@ func (mr *MockClientMockRecorder) Close() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockClient)(nil).Close))
 }
 
+// OnConnect mocks base method.
+func (m *MockClient) OnConnect(arg0 func()) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "OnConnect", arg0)
+}
+
+// OnConnect indicates an expected call of OnConnect.
+func (mr *MockClientMockRecorder) OnConnect(arg0 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OnConnect", reflect.TypeOf((*MockClient)(nil).OnConnect), arg0)
+}
+
 // Publish mocks base method.
 func (m *MockClient) Publish(arg0 string, arg1 byte, arg2 bool, arg3 protoreflect.ProtoMessage) error {
 	m.ctrl.T.Helper()

@@ -85,6 +85,9 @@ type client struct {
 	subscriptions    map[*subscription]bool
 	subscribedTopics map[string]int
 
+	// connectCallbacks are run every time a connection to the broker is established
+	connectCallbacks []func()
+
 	connected     bool
 	connectedCond *sync.Cond
 
@@ -123,6 +126,7 @@ type Client interface {
 	PublishRaw(topic string, qos byte, retain bool, message []byte) error
 	PublishEmpty(topic string, qos byte, retain bool) error
 	Publish(topic string, qos byte, retain bool, message proto.Message) error
+	OnConnect(callback func())
 	Close()
 }
 
@@ -219,6 +223,19 @@ func onConnect(mosq *C.struct_mosquitto) {
 		if err != nil {
 			log.Errorf("failed to subscribe to topic %s: %v", topic, err)
 		}
+	}
+
+	callbacks := make([]func(), 0)
+	locked(client.lock, func() {
+		callbacks = append(callbacks, client.connectCallbacks...)
+	})
+
+	// Run connect callbacks in their own goroutines: they run concurrently
+	// with the mosquitto handler thread we are currently on, so that they
+	// may safely call blocking Client methods (e.g. PublishRaw with
+	// qos > 0)
+	for _, callback := range callbacks {
+		go callback()
 	}
 
 	locked(client.lock, func() {
@@ -399,6 +416,16 @@ func (client *client) Subscribe(topic string, callback Callback) (Subscription, 
 	}
 
 	return sub, nil
+}
+
+// OnConnect registers a callback that is run every time a connection to
+// the broker is (re-)established, e.g. after the broker was restarted
+// It is intended for republishing state (in particular retained messages),
+// which the broker may have lost across a restart without the client noticing.
+func (client *client) OnConnect(callback func()) {
+	locked(client.lock, func() {
+		client.connectCallbacks = append(client.connectCallbacks, callback)
+	})
 }
 
 func (sub *subscription) Unsubscribe() {
