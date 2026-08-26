@@ -20,6 +20,7 @@ import (
 type MockHandler struct {
 	ctrl     *gomock.Controller
 	recorder *MockHandlerMockRecorder
+	isgomock struct{}
 }
 
 // MockHandlerMockRecorder is the mock recorder for MockHandler.
@@ -99,16 +100,16 @@ func (mr *MockHandlerMockRecorder) SetStatus(arg0 any) *gomock.Call {
 }
 
 // SetStatusIfIdle mocks base method.
-func (m *MockHandler) SetStatusIfIdle(arg0 status.SystemStatus) (bool, error) {
+func (m *MockHandler) SetStatusIfIdle(newStatus status.SystemStatus) (bool, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SetStatusIfIdle", arg0)
+	ret := m.ctrl.Call(m, "SetStatusIfIdle", newStatus)
 	ret0, _ := ret[0].(bool)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // SetStatusIfIdle indicates an expected call of SetStatusIfIdle.
-func (mr *MockHandlerMockRecorder) SetStatusIfIdle(arg0 any) *gomock.Call {
+func (mr *MockHandlerMockRecorder) SetStatusIfIdle(newStatus any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetStatusIfIdle", reflect.TypeOf((*MockHandler)(nil).SetStatusIfIdle), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetStatusIfIdle", reflect.TypeOf((*MockHandler)(nil).SetStatusIfIdle), newStatus)
 }
