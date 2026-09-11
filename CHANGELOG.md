@@ -1,3 +1,7 @@
+## [3.4.0] - 2026-09-11
+### Added
+- mqtt: Client.OnConnect, to register a callback that runs on every (re-)connect to the broker.
+
 ## [3.3.0] - 2026-05-20
 ### Added
 - Functions to query hardware type and compatible string, using new libdeviceinfo functions (needs core image containing libdeviceinfo >= v1.9.0)
