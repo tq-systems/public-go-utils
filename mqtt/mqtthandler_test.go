@@ -40,6 +40,101 @@ var (
 	mutex      = sync.Mutex{}
 )
 
+func TestOnConnectNotRunRetroactively(t *testing.T) {
+	broker := startMQTTBroker(t)
+	defer stopMQTTBroker(t, broker)
+
+	client, err := NewClient(MQTTBrokerHost, MQTTBrokerPort, "MQTTOnConnectNoRetro")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer client.Close()
+
+	called := make(chan struct{}, 1)
+	client.OnConnect(func() { called <- struct{}{} })
+
+	select {
+	case <-called:
+		t.Fatal("OnConnect callback must not fire retroactively for an already-connected client")
+	case <-time.After(500 * time.Millisecond):
+		// expected: no callback invocation
+	}
+}
+
+// TestOnConnectRepublishesAfterReconnect verifies that a callback registered via OnConnect
+// can be used to make a retained MQTT message resilient against a broker restart: even
+// though the broker loses all retained messages across a restart, and the republished
+// value never changes (so a naive change-based republish would not trigger), a freshly
+// connecting subscriber still receives it, because the OnConnect callback unconditionally
+// republishes on every reconnect.
+func TestOnConnectRepublishesAfterReconnect(t *testing.T) {
+	broker := startMQTTBroker(t)
+
+	clientPub, err := NewClient(MQTTBrokerHost, MQTTBrokerPort, "MQTTOnConnectPublisher")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer clientPub.Close()
+
+	// Register a callback that republishes a retained message with QoS 1 on every
+	// (re-)connect. This uses a blocking Publish call to also verify that the
+	// callback is not run in a way that would deadlock waiting for its own broker
+	// confirmation (see doc comment on OnConnect).
+	republishCount := 0
+	var republishMutex sync.Mutex
+	onConnectCalled := make(chan struct{}, 10)
+	clientPub.OnConnect(func() {
+		err := clientPub.PublishRaw(topic, 1, true, []byte("remaining"))
+		republishMutex.Lock()
+		if err == nil {
+			republishCount++
+		}
+		republishMutex.Unlock()
+		onConnectCalled <- struct{}{}
+	})
+
+	// Simulate the broker losing its retained message across a restart.
+	stopMQTTBroker(t, broker)
+	broker = startMQTTBroker(t)
+	defer stopMQTTBroker(t, broker)
+
+	select {
+	case <-onConnectCalled:
+		// expected: republish callback ran after reconnect
+	case <-time.After(5 * time.Second):
+		t.Fatal("OnConnect callback was not run after broker reconnect")
+	}
+
+	// Give the retained message some time to actually reach the broker.
+	time.Sleep(500 * time.Millisecond)
+
+	republishMutex.Lock()
+	assert.Equal(t, 1, republishCount, "expected exactly one successful republish after reconnect")
+	republishMutex.Unlock()
+
+	// A newly connecting subscriber must now receive the retained message,
+	// even though the broker itself was restarted and lost its own copy,
+	// and no value change ever occurred.
+	waitGroup := &sync.WaitGroup{}
+	waitGroup.Add(1)
+	clientSub, err := NewClient(MQTTBrokerHost, MQTTBrokerPort, "MQTTOnConnectSubscriber")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer clientSub.Close()
+
+	var receivedPayload []byte
+	_, err = clientSub.Subscribe(topic, func(_ string, msg []byte) {
+		receivedPayload = msg
+		waitGroup.Done()
+	})
+	assert.Nil(t, err)
+
+	err = waitWithTimeout(waitGroup, time.Duration(time.Second*2))
+	assert.Nil(t, err, "subscriber did not receive the republished retained message")
+	assert.Equal(t, []byte("remaining"), receivedPayload)
+}
+
 func TestMQTTPubSubWithReconnect(t *testing.T) {
 	waitGroup := &sync.WaitGroup{}
 

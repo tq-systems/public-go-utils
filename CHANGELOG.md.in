@@ -1,1 +1,3 @@
 ## [{{ version }}]
+### Added
+- mqtt: Client.OnConnect, to register a callback that runs on every (re-)connect to the broker.

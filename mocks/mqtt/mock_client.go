@@ -14,13 +14,14 @@ import (
 
 	mqtt "github.com/tq-systems/public-go-utils/v3/mqtt"
 	gomock "go.uber.org/mock/gomock"
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	proto "google.golang.org/protobuf/proto"
 )
 
 // MockClient is a mock of Client interface.
 type MockClient struct {
 	ctrl     *gomock.Controller
 	recorder *MockClientMockRecorder
+	isgomock struct{}
 }
 
 // MockClientMockRecorder is the mock recorder for MockClient.
@@ -52,59 +53,71 @@ func (mr *MockClientMockRecorder) Close() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockClient)(nil).Close))
 }
 
-// Publish mocks base method.
-func (m *MockClient) Publish(arg0 string, arg1 byte, arg2 bool, arg3 protoreflect.ProtoMessage) error {
+// OnConnect mocks base method.
+func (m *MockClient) OnConnect(callback func()) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Publish", arg0, arg1, arg2, arg3)
+	m.ctrl.Call(m, "OnConnect", callback)
+}
+
+// OnConnect indicates an expected call of OnConnect.
+func (mr *MockClientMockRecorder) OnConnect(callback any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OnConnect", reflect.TypeOf((*MockClient)(nil).OnConnect), callback)
+}
+
+// Publish mocks base method.
+func (m *MockClient) Publish(topic string, qos byte, retain bool, message proto.Message) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Publish", topic, qos, retain, message)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Publish indicates an expected call of Publish.
-func (mr *MockClientMockRecorder) Publish(arg0, arg1, arg2, arg3 any) *gomock.Call {
+func (mr *MockClientMockRecorder) Publish(topic, qos, retain, message any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Publish", reflect.TypeOf((*MockClient)(nil).Publish), arg0, arg1, arg2, arg3)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Publish", reflect.TypeOf((*MockClient)(nil).Publish), topic, qos, retain, message)
 }
 
 // PublishEmpty mocks base method.
-func (m *MockClient) PublishEmpty(arg0 string, arg1 byte, arg2 bool) error {
+func (m *MockClient) PublishEmpty(topic string, qos byte, retain bool) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "PublishEmpty", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "PublishEmpty", topic, qos, retain)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // PublishEmpty indicates an expected call of PublishEmpty.
-func (mr *MockClientMockRecorder) PublishEmpty(arg0, arg1, arg2 any) *gomock.Call {
+func (mr *MockClientMockRecorder) PublishEmpty(topic, qos, retain any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PublishEmpty", reflect.TypeOf((*MockClient)(nil).PublishEmpty), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PublishEmpty", reflect.TypeOf((*MockClient)(nil).PublishEmpty), topic, qos, retain)
 }
 
 // PublishRaw mocks base method.
-func (m *MockClient) PublishRaw(arg0 string, arg1 byte, arg2 bool, arg3 []byte) error {
+func (m *MockClient) PublishRaw(topic string, qos byte, retain bool, message []byte) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "PublishRaw", arg0, arg1, arg2, arg3)
+	ret := m.ctrl.Call(m, "PublishRaw", topic, qos, retain, message)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // PublishRaw indicates an expected call of PublishRaw.
-func (mr *MockClientMockRecorder) PublishRaw(arg0, arg1, arg2, arg3 any) *gomock.Call {
+func (mr *MockClientMockRecorder) PublishRaw(topic, qos, retain, message any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PublishRaw", reflect.TypeOf((*MockClient)(nil).PublishRaw), arg0, arg1, arg2, arg3)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PublishRaw", reflect.TypeOf((*MockClient)(nil).PublishRaw), topic, qos, retain, message)
 }
 
 // Subscribe mocks base method.
-func (m *MockClient) Subscribe(arg0 string, arg1 mqtt.Callback) (mqtt.Subscription, error) {
+func (m *MockClient) Subscribe(topic string, callback mqtt.Callback) (mqtt.Subscription, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Subscribe", arg0, arg1)
+	ret := m.ctrl.Call(m, "Subscribe", topic, callback)
 	ret0, _ := ret[0].(mqtt.Subscription)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Subscribe indicates an expected call of Subscribe.
-func (mr *MockClientMockRecorder) Subscribe(arg0, arg1 any) *gomock.Call {
+func (mr *MockClientMockRecorder) Subscribe(topic, callback any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Subscribe", reflect.TypeOf((*MockClient)(nil).Subscribe), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Subscribe", reflect.TypeOf((*MockClient)(nil).Subscribe), topic, callback)
 }
