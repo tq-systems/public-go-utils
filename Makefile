@@ -9,6 +9,6 @@
 #
 
 DIR_BACKEND = .
-FRONTEND_BUILD =
+DIR_FRONTEND = .
 
 include /opt/energy-manager/apps/Makefile
