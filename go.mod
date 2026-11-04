@@ -1,16 +1,16 @@
 module github.com/tq-systems/public-go-utils/v3
 
-go 1.25.0
+go 1.26.0
 
 require (
-	github.com/godbus/dbus/v5 v5.2.2
+	github.com/godbus/dbus/v5 v5.2.4
 	github.com/gorilla/mux v1.8.1
 	github.com/gorilla/websocket v1.5.3
 	github.com/planetscale/vtprotobuf v0.6.0
 	github.com/stretchr/testify v1.9.0
 	github.com/vishvananda/netlink v1.3.1
 	go.uber.org/mock v0.6.0
-	golang.org/x/sys v0.47.0
+	golang.org/x/sys v0.49.0
 	google.golang.org/protobuf v1.36.12
 )
 

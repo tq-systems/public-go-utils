@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2026 TQ-Systems GmbH <license@tq-group.com>, D-82229 Seefeld,
  * Germany. All rights reserved.
- * Author: Benno Kühnl and the Energy Manager development team
+ * Author: Benno Schmidt-Kühnl and the Energy Manager development team
  *
  * This software is licensed under the TQ-Systems Product Software License
  * Agreement Version 1.0.3 or any later version.
