@@ -1,3 +1,7 @@
+## [3.4.1] - 2026-11-04
+### Changed
+- Updated copyright license and file headers
+
 ## [3.4.0] - 2026-09-11
 ### Added
 - mqtt: Client.OnConnect, to register a callback that runs on every (re-)connect to the broker.
